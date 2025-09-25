@@ -1,0 +1,349 @@
+{% extends 'chatbot/base.html' %}
+{% load static %}
+
+{% block title %}Profile - {{ user.username }} - A.I.V.A{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        min-height: 100vh;
+        overflow-y: auto;
+    }
+    
+    .profile-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        background: rgba(20, 20, 20, 0.92);
+        border-radius: 15px;
+        box-shadow: none;
+        border: 1.5px solid var(--primary-color);
+        overflow: visible;
+        min-height: calc(100vh - 4rem);
+    }
+    .profile-header {
+        position: relative;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        padding: 2rem;
+        color: var(--text-color);
+    }
+    .profile-cover {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.2);
+    }
+    .profile-info {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+    }
+    .profile-avatar {
+        position: relative;
+        width: 150px;
+        height: 150px;
+        margin: 0 auto 1rem;
+    }
+    .profile-avatar img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--secondary-color);
+        box-shadow: none;
+    }
+    .avatar-upload {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background: var(--background-color);
+        border-radius: 50%;
+        padding: 0.5rem;
+        cursor: pointer;
+        box-shadow: none;
+    }
+    .upload-btn {
+        color: var(--primary-color);
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    .upload-btn:hover {
+        color: var(--secondary-color);
+        text-shadow: 1px 0 var(--glitch-color-1), -1px 0 var(--glitch-color-2);
+        animation: glitch-hover 0.2s linear 2 alternate;
+    }
+    .profile-content {
+        padding: 2rem;
+    }
+    .profile-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: rgba(30, 30, 30, 0.95);
+        border-radius: 10px;
+        border: 1px solid var(--primary-color);
+    }
+    .profile-section h2 {
+        color: var(--primary-color);
+        margin-bottom: 1.5rem;
+        font-size: 1.5rem;
+    }
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--secondary-color);
+        font-weight: 500;
+    }
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--primary-color);
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.3s;
+        background: rgba(30, 30, 30, 0.8);
+        color: var(--text-color);
+    }
+    .form-control:focus {
+        border-color: var(--secondary-color);
+        box-shadow: 0 0 15px var(--secondary-color);
+        color: var(--text-color);
+    }
+    .btn-save, .btn-change-password {
+        background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+        color: var(--text-color);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: all 0.2s;
+        position: relative;
+        overflow: hidden;
+        box-shadow: none;
+    }
+    .btn-save:hover, .btn-change-password:hover {
+        color: var(--secondary-color) !important;
+        text-shadow: 1px 0 var(--glitch-color-1), -1px 0 var(--glitch-color-2);
+        animation: glitch-hover 0.2s linear 2 alternate;
+        background: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
+    }
+    .glitch-text, .glitch-text:hover {
+        animation: glitch-hover 0.2s linear 2 alternate;
+        text-shadow: 1px 0 var(--glitch-color-1), -1px 0 var(--glitch-color-2);
+    }
+    @keyframes glitch-hover {
+        0% { transform: translate(0); }
+        50% { transform: translate(-1px, 1px); }
+        100% { transform: translate(0); }
+    }
+    .settings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+    .setting-item {
+        background: rgba(20, 20, 20, 0.8);
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 0 10px var(--primary-color);
+        border: 1px solid var(--secondary-color);
+    }
+    .setting-item h3 {
+        color: var(--secondary-color);
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+    }
+    .notification-settings {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .setting-toggle {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+    }
+    .setting-toggle label {
+        color: var(--primary-color);
+    }
+    .setting-toggle input[type="checkbox"] {
+        width: 40px;
+        height: 20px;
+        position: relative;
+        appearance: none;
+        background: var(--secondary-color);
+        border-radius: 20px;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    .setting-toggle input[type="checkbox"]:checked {
+        background: var(--primary-color);
+    }
+    .setting-toggle input[type="checkbox"]::before {
+        content: '';
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--background-color);
+        top: 2px;
+        left: 2px;
+        transition: transform 0.3s;
+    }
+    .setting-toggle input[type="checkbox"]:checked::before {
+        transform: translateX(20px);
+    }
+    @media (max-width: 768px) {
+        .profile-container {
+            margin: 1rem;
+        }
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        .settings-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <div class="profile-cover"></div>
+        <div class="profile-info">
+            <div class="profile-avatar">
+                {% if user.profile.avatar %}
+                    <img src="{{ user.profile.avatar.url }}" alt="Profile Picture" id="avatar-preview">
+                {% else %}
+                <img src="{% static 'images/default-avatar.png' %}" alt="Default Avatar" id="avatar-preview">
+                {% endif %}
+                <div class="avatar-upload">
+                    <form method="post" enctype="multipart/form-data" id="avatar-form">
+                        {% csrf_token %}
+                        <label for="avatar-input" class="upload-btn">
+                            <i class="fas fa-camera"></i>
+                        </label>
+                        <input type="file" name="avatar" id="avatar-input" accept="image/*" style="display: none;">
+                    </form>
+                </div>
+            </div>
+            <h1 class="glitch-text">{{ user.username }}</h1>
+            <p class="user-email">{{ user.email }}</p>
+        </div>
+    </div>
+
+    <div class="profile-content">
+        <div class="profile-section">
+            <h2>Personal Information</h2>
+            <form method="post" class="profile-form">
+                {% csrf_token %}
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="first_name">First Name</label>
+                        <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="last_name">Last Name</label>
+                        <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" value="{{ user.email }}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" value="{{ user.profile.phone }}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="bio">Bio</label>
+                        <textarea id="bio" name="bio" class="form-control" rows="3">{{ user.profile.bio }}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="location">Location</label>
+                        <input type="text" id="location" name="location" value="{{ user.profile.location }}" class="form-control">
+                    </div>
+                </div>
+                <button type="submit" class="btn-save">Save Changes</button>
+            </form>
+        </div>
+
+        <div class="profile-section">
+            <h2>Account Settings</h2>
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <h3>Change Password</h3>
+                    <form method="post" class="password-form">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="old_password">Current Password</label>
+                            <input type="password" id="old_password" name="old_password" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="new_password">New Password</label>
+                            <input type="password" id="new_password" name="new_password" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm_password">Confirm New Password</label>
+                            <input type="password" id="confirm_password" name="confirm_password" class="form-control">
+                        </div>
+                        <button type="submit" class="btn-change-password">Change Password</button>
+                    </form>
+                </div>
+                <div class="setting-item">
+                    <h3>Notification Preferences</h3>
+                    <div class="notification-settings">
+                        <div class="setting-toggle">
+                            <label for="email_notifications">Email Notifications</label>
+                            <input type="checkbox" id="email_notifications" name="email_notifications" {% if user.profile.email_notifications %}checked{% endif %}>
+                        </div>
+                        <div class="setting-toggle">
+                            <label for="chat_notifications">Chat Notifications</label>
+                            <input type="checkbox" id="chat_notifications" name="chat_notifications" {% if user.profile.chat_notifications %}checked{% endif %}>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const avatarInput = document.getElementById('avatar-input');
+    const avatarForm = document.getElementById('avatar-form');
+    const avatarPreview = document.getElementById('avatar-preview');
+
+    avatarInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                avatarPreview.src = e.target.result;
+            }
+            
+            reader.readAsDataURL(this.files[0]);
+            
+            // Submit the form when a new image is selected
+            avatarForm.submit();
+        }
+    });
+});
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+{% endblock %} 

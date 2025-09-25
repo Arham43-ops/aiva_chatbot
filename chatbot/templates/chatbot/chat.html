@@ -1,0 +1,473 @@
+{% extends 'chatbot/base.html' %}
+
+{% block title %}Chat with A.I.V.A{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Basic chat layout with sidebar */
+    .chat-container {
+        display: flex;
+        height: calc(100vh - var(--header-height)); /* Adjust based on header height */
+        width: 100% ;
+    }
+
+    .sidebar {
+        width: 250px;
+        background-color: #f8f9fa; /* Light background for sidebar */
+        border-right: 1px solid #dee2e6;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        height: 100%; /* Ensure sidebar takes full height */
+        flex-shrink: 0; /* Prevent sidebar from shrinking */
+    }
+
+    .main-chat-area {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 25px;
+        background: linear-gradient(to bottom right, #667eea, #764ba2); /* Background gradient */
+        min-height: 0; /* Important for flex-grow to work correctly with overflow children */
+    }
+
+    .chat-window {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        /* height: 0; Removed as min-height: 0 on parent handles this */
+        /* Style scrollbar */
+        scrollbar-width: thin; /* "auto" or "thin" */
+        scrollbar-color: rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.1); /* thumb track */
+    }
+
+    .chat-window::-webkit-scrollbar {
+        width: 8px; /* width of the scrollbar */
+    }
+
+    .chat-window::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.1); /* color of the track */
+        border-radius: 10px;
+    }
+
+    .chat-window::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.2); /* color of the scrollbar thumb */
+        border-radius: 10px; /* roundness of the scrollbar thumb */
+        border: 2px solid rgba(0, 0, 0, 0.1); /* creates padding around thumb */
+    }
+
+    .message {
+        margin-bottom: 15px;
+        padding: 10px 15px;
+        border-radius: 15px;
+        max-width: 70%;
+        word-wrap: break-word;
+        position: relative; /* Added for speaker icon positioning */
+    }
+
+    .message.user {
+        align-self: flex-end;
+        background-color: #dcf8c6; /* Light green for user messages */
+        color: #333;
+        border-bottom-right-radius: 2px;
+    }
+
+    .message.bot {
+        align-self: flex-start;
+        background-color: #ffffff; /* White for bot messages */
+        color: #333;
+        border-bottom-left-radius: 2px;
+        padding-right: 45px; /* Added space for speaker icon */
+        max-width: calc(70% - 45px); /* Adjust max-width for icon space */
+    }
+
+    .message-timestamp {
+        font-size: 0.75rem;
+        color: rgba(0, 0, 0, 0.5);
+        margin-top: 5px;
+        display: block;
+    }
+
+    .message.user .message-timestamp {
+        text-align: right;
+    }
+
+    .message.bot .message-timestamp {
+        text-align: left;
+    }
+
+    .input-area {
+        padding: 5px 20px; /* Reduced padding further */
+        background-color: rgba(255, 255, 255, 0.1); /* Slightly transparent white background */
+        backdrop-filter: blur(10px); /* Blur effect */
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex; /* Make it a flex container */
+        align-items: center; /* Vertically center content */
+        /* margin-bottom: 30px; Removed to allow chat window to expand */
+    }
+
+    .form-control {
+        border-radius: 25px;
+    }
+
+    .btn-send {
+        border-radius: 25px;
+        background: linear-gradient(to right, #00eaff, #667eea); /* More vibrant gradient */
+        color: white;
+        border: none;
+        transition: all 0.3s ease; /* Smooth transition for all properties */
+        padding: 10px 20px; /* Adjust padding for better size */
+        margin-left: 10px; /* Space from input */
+        min-width: 90px; /* Ensure consistent width */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-send:hover {
+         background: linear-gradient(to right, #ff2fd6, #764ba2); /* Distinct hover gradient */
+         transform: translateY(-2px); /* Slight lift effect */
+         box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-send:active {
+        transform: translateY(0); /* Press down effect */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Sidebar Styles */
+    .sidebar-header {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        color: #333;
+    }
+
+    .sidebar-menu {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .sidebar-item {
+        margin-bottom: 1rem;
+    }
+
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        color: #333; /* Dark text for links */
+        text-decoration: none;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .sidebar-link:hover {
+        background-color: #e9ecef;
+        color: #000;
+    }
+
+     .sidebar-link i {
+        margin-right: 10px;
+        width: 20px; /* Fixed width for icons */
+        text-align: center;
+    }
+    
+    .new-chat-button {
+        margin-top: auto; /* Push to the bottom */
+        margin-bottom: 15px; /* Added margin-bottom to move it up */
+        width: 100%;
+    }
+
+    /* Chat header styles */
+    .chat-header {
+        background-color: rgba(255, 255, 255, 0.2); /* Slightly transparent white background */
+        backdrop-filter: blur(10px); /* Blur effect */
+        padding: 10px 20px;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .chat-title {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+    .back-button {
+        color: white;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        font-size: 0.9rem;
+    }
+
+    .back-button:hover {
+        color: #e0e7ff;
+    }
+
+    .delete-chat-button {
+        color: #ff6b6b;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        font-size: 0.9rem;
+    }
+
+    .delete-chat-button:hover {
+        color: #ff5252;
+    }
+
+    /* Speaker icon styles */
+    .speaker-icon {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #667eea;
+        font-size: 1.2rem;
+        transition: color 0.3s ease;
+    }
+
+    .speaker-icon:hover {
+        color: #5a67d8;
+    }
+
+    .speaker-icon.speaking {
+        color: #ff6b6b;
+        animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container" {% if chat_session %}data-chat-id="{{ chat_session.id }}"{% endif %}>
+    <!-- Sidebar -->
+    {% if user_is_authenticated %}
+    <div class="sidebar">
+        <div class="sidebar-header">Menu</div>
+        <ul class="sidebar-menu">
+            <li class="sidebar-item">
+                <a href="{% url 'profile' %}" class="sidebar-link">
+                    <i class="fas fa-user"></i> Profile
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="{% url 'chat_list' %}" class="sidebar-link">
+                    <i class="fas fa-history"></i> Chat Histories
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="{% url 'feedback' %}" class="sidebar-link">
+                    <i class="fas fa-comment-dots"></i> Feedback
+                </a>
+            </li>
+            <li class="sidebar-item">
+                 <a href="{% url 'logout' %}" class="sidebar-link">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </li>
+            {% if user.is_staff %}
+              <li class="sidebar-item">
+                 <a href="{% url 'admin_dashboard' %}" class="sidebar-link">
+                    <i class="fas fa-chart-line"></i> Admin Dashboard
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+         <a href="{% url 'new_chat' %}" class="btn btn-primary new-chat-button">
+            <i class="fas fa-plus"></i> New Chat
+         </a>
+    </div>
+    {% endif %}
+
+    <!-- Main Chat Area -->
+    <div class="main-chat-area">
+        <!-- Chat Header -->
+        <div class="chat-header">
+             {% if user_is_authenticated %}
+              <a href="{% url 'chat_list' %}" class="back-button">
+                <i class="fas fa-arrow-left"></i> Back to Chats
+            </a>
+             {% else %}
+                                      <span class="chat-title">A.I.V.A Chat</span>
+             {% endif %}
+            <span class="chat-title">
+                {% if chat_session %}
+                    {{ chat_session.title }}
+                {% else %}
+                    New Chat
+                {% endif %}
+            </span>
+             {% if chat_session %}
+            <a href="{% url 'delete_chat' chat_session.id %}" class="delete-chat-button" onclick="return confirm('Are you sure you want to delete this chat session?');">
+                <i class="fas fa-trash"></i> Delete Chat
+              </a>
+            {% endif %}
+        </div>
+
+        <!-- Chat Window -->
+        <div class="chat-window" id="chat-window">
+            {% if chat_session %}
+                {% for message in chat_session.messages.all %}
+                <div class="message {% if message.is_user %}user{% else %}bot{% endif %}">
+                    {{ message.message }}
+                    <span class="message-timestamp">{{ message.timestamp|date:"H:i" }}</span>
+                </div>
+            {% endfor %}
+            {% else %}
+                 <div class="message bot">
+                    Hello! How can I help you today?
+                    <span class="message-timestamp">{{ now|date:"H:i" }}</span>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-area">
+            <input type="text" id="message-input" class="form-control" placeholder="Type your message..." autocomplete="off">
+            <button id="send-button" class="btn btn-primary btn-send">
+                <i class="fas fa-paper-plane"></i>
+                </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Get chat session ID from data attribute
+    const chatContainer = document.querySelector('.chat-container');
+    let currentChatId = chatContainer ? chatContainer.dataset.chatId : null;
+    if (currentChatId) {
+        currentChatId = parseInt(currentChatId);
+    }
+    
+        const chatWindow = document.getElementById('chat-window');
+    const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+
+    // Scroll to the bottom of the chat window
+        function scrollToBottom() {
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }
+
+    scrollToBottom(); // Scroll on page load
+
+    // Send message function (restored)
+        function sendMessage() {
+        const message = messageInput.value.trim();
+        if (message) {
+            appendMessage(message, true); // Append user message
+            messageInput.value = ''; // Clear input
+
+            // Prepare request data with chat_id
+            const requestData = { message: message };
+            if (currentChatId) {
+                requestData.chat_id = currentChatId;
+            }
+
+            // Send message to Django view
+            fetch('/chatbot/send_message/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.response) {
+                    appendMessage(data.response, false); // Append bot message
+                    // Update currentChatId if a new session was created
+                    if (data.chat_session_id && !currentChatId) {
+                        const newUrl = `/chatbot/chat/${data.chat_session_id}/`;
+                        window.history.replaceState({}, '', newUrl);
+                        currentChatId = data.chat_session_id;
+                }
+                }
+            })
+            .catch(error => console.error('Error sending message:', error));
+        }
+    }
+
+    // Append message to chat window (modified to include speaker icon)
+        function appendMessage(message, isUser) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', isUser ? 'user' : 'bot');
+        
+        let innerHTML = `
+            ${message}
+            <span class="message-timestamp">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        `;
+
+        messageDiv.innerHTML = innerHTML;
+        chatWindow.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+    // CSRF token helper
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+    }
+
+    // Event listeners for sending messages
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    // Stop speech when tab/window loses focus
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            stopSpeech();
+        }
+    });
+
+    // Stop speech when window loses focus
+    window.addEventListener('blur', () => {
+        stopSpeech();
+    });
+
+    // Stop speech when user starts typing
+    messageInput.addEventListener('input', () => {
+        if (isSpeaking) {
+            stopSpeech();
+        }
+    });
+
+    // Stop speech when user clicks anywhere in the chat area
+    chatWindow.addEventListener('click', () => {
+        if (isSpeaking) {
+            stopSpeech();
+        }
+    });
+</script>
+{% endblock %} 

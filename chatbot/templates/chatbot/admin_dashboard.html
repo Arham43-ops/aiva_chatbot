@@ -1,0 +1,267 @@
+{% extends 'chatbot/admin_base.html' %}
+
+{% block title %}Admin Dashboard {% endblock %}
+
+{% block header_title %}Admin Dashboard {% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Admin Dashboard</h2>
+    
+<!-- Statistics Cards -->
+<div class="row mb-4 justify-content-center align-items-stretch">
+    <div class="col-md-3 d-flex">
+        <div class="stats-card flex-fill d-flex flex-column justify-content-center align-items-center">
+            <div class="stats-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stats-number">{{ user_count }}</div>
+            <div class="stats-label">Total Users</div>
+        </div>
+    </div>
+    <div class="col-md-3 d-flex">
+        <div class="stats-card flex-fill d-flex flex-column justify-content-center align-items-center">
+            <div class="stats-icon">
+                <i class="fas fa-comments"></i>
+            </div>
+            <div class="stats-number">{{ chat_sessions.count }}</div>
+            <div class="stats-label">Total Chats</div>
+        </div>
+    </div>
+    <div class="col-md-3 d-flex">
+        <div class="stats-card flex-fill d-flex flex-column justify-content-center align-items-center">
+            <div class="stats-icon">
+                <i class="fas fa-question-circle"></i>
+            </div>
+            <div class="stats-number">{{ unanswered|length }}</div>
+            <div class="stats-label">Unanswered Que</div>
+        </div>
+    </div>
+    <div class="col-md-3 d-flex">
+        <div class="stats-card flex-fill d-flex flex-column justify-content-center align-items-center">
+            <div class="stats-icon">
+                <i class="fas fa-comment-dots"></i>
+            </div>
+            <div class="stats-number">{{ total_feedback_count }}</div>
+            <div class="stats-label">Total Feedbacks</div>
+        </div>
+    </div>
+</div>
+
+<!-- Graphs Section -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="chart-container">
+            <h3 class="section-title mb-4">User Registrations per Day</h3>
+            <canvas id="userRegistrationChart"></canvas>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="chart-container">
+            <h3 class="section-title mb-4">Chat Sessions per Day</h3>
+            <canvas id="chatSessionsChart"></canvas>
+        </div>
+    </div>
+</div>
+
+    <!-- Recent Feedback Section -->
+<div class="card mb-4 mt-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Recent Feedback</h5>
+    </div>
+    <div class="card-body">
+        {% if feedback_list %}
+            <div class="list-group">
+                {% for feedback in feedback_list %}
+                <div class="list-group-item flex-column align-items-start">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">Feedback from {% if feedback.name %}{{ feedback.name }}{% else %}Anonymous{% endif %}</h5>
+                        <small class="text-muted">{{ feedback.created_at|date:"M d, Y H:i" }}</small>
+                    </div>
+                    <p class="mb-1">{{ feedback.message|truncatechars:100 }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted mb-0">No feedback received yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Safely pass chart data to JS -->
+{{ user_chart_labels|json_script:"user-chart-labels" }}
+{{ user_chart_data|json_script:"user-chart-data" }}
+{{ chat_chart_labels|json_script:"chat-chart-labels" }}
+{{ chat_chart_data|json_script:"chat-chart-data" }}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: rgba(20, 20, 20, 0.97);
+        border-radius: 0.75rem;
+        padding: 1.2rem;
+        border: 1.5px solid var(--primary-color);
+        box-shadow: none;
+        transition: all 0.2s;
+        color: var(--text-color);
+        text-align: center;
+        margin-bottom: 1.5rem;
+        min-width: 140px;
+        min-height: 140px;
+        aspect-ratio: 1 / 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    .stats-card:hover {
+        border-color: var(--secondary-color);
+        text-shadow: 1px 0 var(--glitch-color-1), -1px 0 var(--glitch-color-2);
+        animation: glitch-hover 0.2s linear 2 alternate;
+    }
+    .stats-icon {
+        font-size: 2.2rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+        text-shadow: 1px 0 var(--glitch-color-1), -1px 0 var(--glitch-color-2);
+    }
+    .stats-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--secondary-color);
+        margin-bottom: 0.5rem;
+        letter-spacing: 1px;
+    }
+    .stats-label {
+        color: var(--text-color);
+        opacity: 0.7;
+        font-size: 1.1rem;
+        letter-spacing: 0.5px;
+    }
+    .chart-container {
+        background: rgba(20, 20, 20, 0.97);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        border: 1.5px solid var(--primary-color);
+        box-shadow: none;
+        margin-top: 1rem;
+        color: var(--text-color);
+    }
+    .section-title {
+        color: var(--primary-color);
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        letter-spacing: 1px;
+    }
+    .card {
+        background: rgba(20, 20, 20, 0.97);
+        border-radius: 0.75rem;
+        border: 1.5px solid var(--primary-color);
+        color: var(--text-color);
+        box-shadow: none;
+    }
+    .card-title {
+        color: var(--secondary-color);
+        font-weight: 600;
+        letter-spacing: 1px;
+    }
+    .list-group-item {
+        background: transparent;
+        color: var(--text-color);
+        border: none;
+        border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .list-group-item:last-child {
+        border-bottom: none;
+    }
+    @keyframes glitch-hover {
+        0% { transform: translate(0); }
+        50% { transform: translate(-1px, 1px); }
+        100% { transform: translate(0); }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Safely get chart data from script tags
+        const userChartLabels = JSON.parse(document.getElementById('user-chart-labels').textContent);
+        const userChartData = JSON.parse(document.getElementById('user-chart-data').textContent);
+        const chatChartLabels = JSON.parse(document.getElementById('chat-chart-labels').textContent);
+        const chatChartData = JSON.parse(document.getElementById('chat-chart-data').textContent);
+
+        // User registration chart
+        const userCanvas = document.getElementById('userRegistrationChart');
+        if (userCanvas && window.Chart) {
+            const userCtx = userCanvas.getContext('2d');
+            new Chart(userCtx, {
+                type: 'line',
+                data: {
+                    labels: userChartLabels,
+                    datasets: [{
+                        label: 'New Users Registered',
+                        data: userChartData,
+                        backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            precision: 0
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Chat sessions chart
+        const chatCanvas = document.getElementById('chatSessionsChart');
+        if (chatCanvas && window.Chart) {
+            const chatCtx = chatCanvas.getContext('2d');
+            new Chart(chatCtx, {
+                type: 'bar',
+                data: {
+                    labels: chatChartLabels,
+                    datasets: [{
+                        label: 'Chat Sessions',
+                        data: chatChartData,
+                        backgroundColor: 'rgba(87, 184, 148, 0.6)',
+                        borderColor: 'rgba(87, 184, 148, 1)',
+                        borderWidth: 1,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            precision: 0
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %} 

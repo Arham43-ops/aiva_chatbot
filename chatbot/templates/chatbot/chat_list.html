@@ -1,0 +1,144 @@
+{% extends 'chatbot/base.html' %}
+
+{% block title %}My Chats - A.I.V.A{% endblock %}
+
+{% block extra_css %}
+<style>
+    .aiva-card {
+        background: rgba(255,255,255,0.85);
+        border-radius: 2rem;
+        box-shadow: 0 8px 32px 0 rgba(31,38,135,0.25);
+        padding: 3rem 2.5rem 2.5rem 2.5rem;
+        margin-top: 60px;
+        margin-bottom: 60px;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.25);
+        transition: box-shadow 0.3s;
+    }
+    .aiva-card:hover {
+        box-shadow: 0 16px 48px 0 rgba(31,38,135,0.30);
+    }
+    .aiva-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #232946;
+        letter-spacing: 2px;
+        margin-bottom: 2rem;
+    }
+    .aiva-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        padding: 0.75rem 2rem;
+        box-shadow: 0 2px 8px rgba(102,126,234,0.10);
+        transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+        outline: none;
+    }
+    .aiva-btn:hover, .aiva-btn:focus {
+        background: linear-gradient(135deg, #5a67d8 0%, #6b47b6 100%);
+        transform: translateY(-2px) scale(1.04);
+        box-shadow: 0 4px 16px rgba(102,126,234,0.18);
+    }
+    .aiva-btn:active {
+        transform: scale(0.98);
+    }
+    .aiva-list-group .list-group-item {
+        background: rgba(255,255,255,0.7);
+        border: none;
+        border-radius: 1rem;
+        margin-bottom: 1rem;
+        transition: box-shadow 0.2s, background 0.2s;
+        box-shadow: 0 2px 8px rgba(102,126,234,0.05);
+        cursor: pointer;
+    }
+    .aiva-list-group .list-group-item:hover {
+        background: #e0e7ff;
+        box-shadow: 0 4px 16px rgba(102,126,234,0.12);
+        transform: scale(1.01);
+    }
+    .aiva-empty {
+        text-align: center;
+        padding: 4rem 0 2rem 0;
+    }
+    .aiva-empty-title {
+        font-size: 2rem;
+        color: #6b7280;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    .aiva-empty-desc {
+        color: #7c7c7c;
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+    }
+    .chat-preview {
+        color: #6b7280;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+    .chat-date {
+        color: #6b7280;
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12">
+        <div class="aiva-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <span class="aiva-title">My Chats</span>
+                <a href="{% url 'new_chat' %}" class="aiva-btn">
+                    <i class="fas fa-plus me-2"></i> New Chat
+                </a>
+            </div>
+            
+            {% if chat_sessions %}
+                <div class="aiva-list-group list-group">
+                    {% for chat in chat_sessions %}
+                        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <a href="{% url 'chat' chat.id %}" class="text-decoration-none text-dark flex-grow-1 me-2">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">{{ chat.title }}</h5>
+                                    <small class="chat-date">{{ chat.updated_at|date:"M d, Y H:i" }}</small>
+                                </div>
+                                {% with last_message=chat.messages.last %}
+                                    {% if last_message %}
+                                        <p class="chat-preview mb-1">
+                                            <strong>{% if last_message.is_user %}You:{% else %}A.I.V.A:{% endif %}</strong>
+                                            {{ last_message.message|truncatechars:100 }}
+                                        </p>
+                                    {% endif %}
+                                {% endwith %}
+                            </a>
+                            <form method="post" action="{% url 'delete_chat' chat.id %}" onsubmit="return confirm('Are you sure you want to delete this chat?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="aiva-empty">
+                    <div class="aiva-empty-title">No chats yet</div>
+                    <div class="aiva-empty-desc">Start a new conversation with A.I.V.A!</div>
+                    <a href="{% url 'new_chat' %}" class="aiva-btn mt-3">
+                        <i class="fas fa-comments me-2"></i> Start New Chat
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+{% endblock %} 

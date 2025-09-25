@@ -1,0 +1,134 @@
+{% extends 'chatbot/admin_base.html' %}
+
+{% block title %}Admin Dashboard - Chats{% endblock %}
+
+{% block header_title %}Recent Chat Activity{% endblock %}
+
+{% block content %}
+<!-- Recent Chats Section -->
+<section id="chats" class="admin-section mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="section-title mb-0">Recent Chat Activity</h2>
+        <button class="btn btn-outline-primary" onclick="location.reload()">
+            <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+    </div>
+    <div class="row">
+        {% for session in chat_sessions|slice:":5" %}
+        <div class="col-md-6 mb-4">
+            <div class="chat-card">
+                <div class="chat-card-header">
+                    <h5 class="chat-title">{{ session.title }}</h5>
+                    <small class="text-muted">{{ session.updated_at|date:"M d, Y H:i" }}</small>
+                </div>
+                <div class="chat-card-body">
+                    <p class="mb-2"><strong>User:</strong> <a href="{% url 'admin_user_detail' session.user.id %}" class="text-decoration-none text-primary">{{ session.user.username }}</a></p>
+                    {% for msg in session.messages.all|slice:":3" %}
+                    <div class="chat-message {% if msg.is_user %}message-user{% else %}message-bot{% endif %} mb-2">
+                        <strong>{% if msg.is_user %}User:{% else %}A.I.V.A:{% endif %}</strong>
+                        {{ msg.message|truncatechars:100 }}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="chat-card-footer">
+                    <a href="{% url 'admin_chat_detail' session.id %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-eye"></i> View Full Chat
+                    </a>
+                    <div class="btn-group" role="group" style="margin-left: 10px;">
+                        <a href="{% url 'export_data' 'csv' %}?user_id={{ session.user.id }}" class="btn btn-sm btn-success">
+                            <i class="fas fa-file-csv"></i> CSV
+                        </a>
+                        <a href="{% url 'export_data' 'pdf' %}?user_id={{ session.user.id }}" class="btn btn-sm btn-danger">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
+                        <a href="{% url 'export_data' 'txt' %}?user_id={{ session.user.id }}" class="btn btn-sm btn-info">
+                            <i class="fas fa-file-alt"></i> TXT
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-4">
+            <p class="text-muted mb-0">No recent chat activity.</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-section {
+        background: var(--card-bg);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        text-shadow: 0 0 10px rgba(0, 234, 255, 0.2);
+    }
+
+    .chat-card {
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 1rem;
+        border: 1px solid var(--border-color);
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+
+    .chat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .chat-card-header {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .chat-title {
+        margin: 0;
+        font-size: 1rem;
+        color: var(--text-color);
+    }
+
+    .chat-card-body {
+        padding: 1rem;
+    }
+
+    .chat-message {
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        color: var(--text-color);
+    }
+    
+    .message-user {
+        background: rgba(0, 234, 255, 0.1);
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    .message-bot {
+        background: rgba(255, 47, 214, 0.1);
+        border-left: 4px solid var(--secondary-color);
+    }
+
+    .chat-card-footer {
+        padding: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .btn-sm {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{% endblock %} 
