@@ -76,7 +76,7 @@ A.I.V.A Chatbot/
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repository-url>
+   git clone <https://github.com/Arham43-ops/aiva_chatbot>
    cd "A.I.V.A Chatbot"
    ```
 
@@ -221,23 +221,16 @@ Configure SMTP settings for password reset and notifications:
 - [ ] File upload in chat
 - [ ] Voice message support
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under a Proprietary License - see the LICENSE file for details. 
+**All rights reserved. Copying, distribution, or use without explicit permission is prohibited.**
 
 ## 👨‍💻 Author
 
-**Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
-- Email: your.email@example.com
+**Arham**
+- GitHub: [@Arham43-ops](https://github.com/Arham43-ops)
+- Email: topiwalaarham@gmail.com
 
 ## 🙏 Acknowledgments
 
