@@ -1,0 +1,213 @@
+{% extends 'chatbot/admin_base.html' %}
+
+{% block title %}Admin Dashboard - Feedback{% endblock %}
+
+{% block header_title %}Recent Feedback{% endblock %}
+
+{% block content %}
+<!-- Recent Feedback Section -->
+<section id="feedback" class="admin-section">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="section-title mb-0">Recent Feedback</h2>
+        <button class="btn btn-outline-primary" onclick="location.reload()">
+            <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+    </div>
+    {% if feedback_list %}
+    <div class="list-group">
+        {% for feedback in feedback_list %}
+        <div class="list-group-item flex-column align-items-start">
+            <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">
+                    Feedback from 
+                    {% if feedback.name %}
+                        {{ feedback.name }}
+                        {% if feedback.email %}
+                            ({{ feedback.email }})
+                        {% endif %}
+                    {% elif feedback.email %}
+                        {{ feedback.email }}
+                    {% else %}
+                        Anonymous
+                    {% endif %}
+                </h5>
+                <small class="text-muted">{{ feedback.created_at|date:"M d, Y H:i" }}</small>
+            </div>
+            <p class="mb-1">{{ feedback.message }}</p>
+            <div class="d-flex justify-content-end mt-2">
+                {% if feedback.email %}
+                <button class="btn btn-sm btn-outline-info reply-btn me-2" data-feedback-id="{{ feedback.id }}">
+                    <i class="fas fa-reply"></i> Reply
+                </button>
+                {% else %}
+                <small class="text-muted me-2">Cannot reply (no email provided)</small>
+                {% endif %}
+                <button class="btn btn-sm btn-outline-danger delete-feedback-btn" data-feedback-id="{{ feedback.id }}">
+                    <i class="fas fa-trash-alt"></i> Delete
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-inbox"></i>
+        <p>No feedback submitted yet.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-section {
+        background: var(--card-bg);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        text-shadow: 0 0 10px rgba(0, 234, 255, 0.2);
+    }
+
+    .list-group-item {
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        margin-bottom: 0.75rem;
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .list-group-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .list-group-item h5 {
+        color: var(--primary-color);
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    .list-group-item p {
+        color: var(--text-color);
+        opacity: 0.8;
+        white-space: pre-wrap; /* Preserve formatting for messages */
+    }
+
+    .list-group-item small {
+        color: var(--text-color);
+        opacity: 0.6;
+    }
+
+    /* Empty state styling */
+    .empty-state {
+        padding: 3rem 1rem;
+        text-align: center;
+        color: var(--text-color);
+        opacity: 0.7;
+    }
+
+    .empty-state i {
+        color: var(--secondary-color);
+        margin-bottom: 1rem;
+        font-size: 3rem;
+    }
+
+    .empty-state p {
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const replyButtons = document.querySelectorAll('.reply-btn');
+        const deleteButtons = document.querySelectorAll('.delete-feedback-btn');
+
+        replyButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const feedbackId = this.dataset.feedbackId;
+                const replyMessage = prompt("Enter your reply message:");
+
+                if (replyMessage !== null && replyMessage.trim() !== '') {
+                    sendReply(feedbackId, replyMessage);
+                } else if (replyMessage !== null) {
+                    alert("Reply message cannot be empty.");
+                }
+            });
+        });
+
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const feedbackId = this.dataset.feedbackId;
+                if (confirm('Are you sure you want to delete this feedback?')) {
+                    deleteFeedback(feedbackId);
+                }
+            });
+        });
+
+        async function sendReply(feedbackId, replyMessage) {
+            const url = `/chatbot/admin/feedback/${feedbackId}/reply/`;
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ reply_message: replyMessage })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert(data.message);
+                    location.reload(); // Reload to show updated feedback list
+                } else {
+                    alert(`Error: ${data.message || 'Failed to send reply.'}`);
+                }
+            } catch (error) {
+                console.error('Error sending reply:', error);
+                alert('An unexpected error occurred. Please try again.');
+            }
+        }
+
+        async function deleteFeedback(feedbackId) {
+            const url = `/chatbot/admin/feedback/${feedbackId}/delete/`;
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    },
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert(data.message);
+                    location.reload(); // Reload to show updated feedback list
+                } else {
+                    alert(`Error: ${data.message || 'Failed to delete feedback.'}`);
+                }
+            } catch (error) {
+                console.error('Error deleting feedback:', error);
+                alert('An unexpected error occurred. Please try again.');
+            }
+        }
+    });
+</script>
+{% endblock %} 

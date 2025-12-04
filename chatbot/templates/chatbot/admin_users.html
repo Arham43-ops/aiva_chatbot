@@ -1,0 +1,144 @@
+{% extends 'chatbot/admin_base.html' %}
+
+{% block title %}Admin Dashboard - Users{% endblock %}
+
+{% block header_title %}User Management{% endblock %}
+
+{% block content %}
+<!-- Users Section -->
+<section id="users" class="admin-section mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="section-title mb-0">User Management</h2>
+        <button class="btn btn-outline-primary">
+            <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Joined</th>
+                    <th>Status</th>
+                    <th>Chats</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            {% if user.profile.avatar %}
+                                <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                            {% else %}
+                                <div class="rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: var(--primary-color);">
+                                    <i class="fas fa-user text-white"></i>
+                                </div>
+                            {% endif %}
+                            {{ user.username }}
+                        </div>
+                    </td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                    <td>
+                        <span class="badge {% if user.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ user.is_active|yesno:"Active,Inactive" }}
+                        </span>
+                    </td>
+                    <td>{{ user.chatsession_set.count }}</td>
+                    <td>
+                        <div class="btn-group">
+                            <a href="{% url 'admin_user_detail' user.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            <button class="btn btn-sm {% if user.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}" 
+                                    onclick="toggleUserStatus({{ user.id }})"
+                                    data-user-id="{{ user.id }}">
+                                <i class="fas {% if user.is_active %}fa-ban{% else %}fa-user-check{% endif %}"></i>
+                                {{ user.is_active|yesno:"Ban,Activate" }}
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-section {
+        background: var(--card-bg);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        text-shadow: 0 0 10px rgba(0, 234, 255, 0.2);
+    }
+
+    .btn-group {
+        gap: 0.5rem;
+    }
+
+    .btn-group .btn {
+        padding: 0.375rem 0.75rem;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleUserStatus(userId) {
+    if (confirm('Are you sure you want to change this user\'s status?')) {
+        showLoading();
+        fetch(`/chatbot/admin/users/${userId}/toggle-status/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            // Check if response is OK (status 200-299)
+            if (!response.ok) {
+                // If not OK, try to get more details from response text
+                return response.text().then(text => {
+                    throw new Error(`Server responded with status ${response.status}: ${text}`);
+                });
+            }
+            return response.json(); // Proceed to parse as JSON
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                console.error('Server responded with error:', data.message);
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            alert('An error occurred: ' + error.message); // Display the actual error message
+        })
+        .finally(() => {
+            hideLoading();
+        });
+    }
+}
+</script>
+{% endblock %} 

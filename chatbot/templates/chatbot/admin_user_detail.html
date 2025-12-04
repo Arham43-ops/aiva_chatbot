@@ -1,0 +1,402 @@
+{% extends 'chatbot/admin_base.html' %}
+
+{% block title %}User Details - {{ user.username }} - A.I.V.A{% endblock %}
+
+{% block header_title %}User Details{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+
+<!-- User Information -->
+<section class="admin-section mb-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="user-profile-header mb-4">
+                <div class="d-flex align-items-center">
+                    <div class="user-avatar me-4">
+                        {% if user.profile.avatar %}
+                            <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+                        {% else %}
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 100px; height: 100px; background: var(--primary-color);">
+                                <i class="fas fa-user fa-3x text-white"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="user-info">
+                        <h2 class="mb-1">{{ user.username }}</h2>
+                        <div class="user-email"><i class="fas fa-envelope"></i>{{ user.email }}</div>
+                        <div class="user-meta">
+                            <span class="badge {% if user.is_active %}bg-success{% else %}bg-danger{% endif %} me-2">
+                                {{ user.is_active|yesno:"Active,Inactive" }}
+                            </span>
+                            <span class="user-joined"><i class="fas fa-clock"></i>Joined {{ user.date_joined|date:"F d, Y" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-card mb-3">
+                        <div class="info-label">Full Name</div>
+                        <div class="info-value">{{ user.get_full_name|default:"Not provided" }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-card mb-3">
+                        <div class="info-label">Phone</div>
+                        <div class="info-value">{{ user.profile.phone|default:"Not provided" }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-card mb-3">
+                        <div class="info-label">Location</div>
+                        <div class="info-value">{{ user.profile.location|default:"Not provided" }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-card mb-3">
+                        <div class="info-label">Last Login</div>
+                        <div class="info-value">{{ user.last_login|date:"F d, Y H:i"|default:"Never" }}</div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="info-card mb-3">
+                        <div class="info-label">Bio</div>
+                        <div class="info-value">{{ user.profile.bio|default:"No bio provided" }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-card mb-3">
+                        <div class="info-label">Email Notifications</div>
+                        <div class="info-value">
+                            <span class="badge {% if user.profile.email_notifications %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ user.profile.email_notifications|yesno:"Enabled,Disabled" }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-card mb-3">
+                        <div class="info-label">Chat Notifications</div>
+                        <div class="info-value">
+                            <span class="badge {% if user.profile.chat_notifications %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ user.profile.chat_notifications|yesno:"Enabled,Disabled" }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="action-card">
+                <h3 class="card-title">Actions</h3>
+                <div class="d-grid gap-2">
+                    <button id="toggle-user-status-btn" 
+                            class="btn {% if user.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}" 
+                            data-user-id="{{ user.id }}">
+                        <i class="fas {% if user.is_active %}fa-ban{% else %}fa-user-check{% endif %}"></i>
+                        {{ user.is_active|yesno:"Ban User,Activate User" }}
+                    </button>
+                    <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+
+            <div class="stats-card mt-4">
+                <h3 class="card-title">Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value">{{ chat_sessions.count }}</div>
+                        <div class="stat-label">Total Chats</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ user.profile.created_at|date:"M d" }}</div>
+                        <div class="stat-label">Profile Created</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Chat History -->
+<section class="admin-section">
+    <h3 class="section-title mb-4">Recent Chat History</h3>
+    {% if chat_sessions %}
+        <div class="row">
+            {% for session in chat_sessions|slice:":5" %}
+            <div class="col-md-6 mb-4">
+                <div class="chat-card">
+                    <div class="chat-card-header">
+                        <h5 class="chat-title">{{ session.title }}</h5>
+                        <small class="text-muted">{{ session.created_at|date:"M d, Y H:i" }}</small>
+                    </div>
+                    <div class="chat-card-body">
+                        {% for message in session.messages.all|slice:":2" %}
+                        <div class="chat-message {% if message.is_user %}message-user{% else %}message-bot{% endif %}">
+                            <strong>{% if message.is_user %}User:{% else %}A.I.V.A:{% endif %}</strong>
+                            {{ message.message|truncatechars:100 }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="chat-card-footer">
+                        <a href="{% url 'admin_chat_detail' session.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i> View Full Chat
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-4">
+            <p class="text-muted mb-0">No chat history available.</p>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-section {
+        background: var(--card-bg);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .user-profile-header {
+        padding: 1.5rem;
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 1rem;
+        border: 1px solid var(--border-color);
+        position: relative;
+        margin-bottom: 2.2rem;
+    }
+
+    .user-profile-header::after {
+        content: '';
+        display: block;
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -10px;
+        height: 2px;
+        background: linear-gradient(90deg, var(--primary-color) 0%, transparent 100%);
+        opacity: 0.18;
+        border-radius: 1px;
+    }
+
+    .info-card {
+        background: rgba(255, 255, 255, 0.02);
+        padding: 1rem;
+        border-radius: 0.75rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .info-label {
+        color: var(--primary-color);
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .info-value {
+        color: var(--text-color);
+        font-size: 1rem;
+    }
+
+    .action-card {
+        background: rgba(255, 255, 255, 0.02);
+        padding: 1.5rem;
+        border-radius: 1rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .stats-card {
+        background: rgba(255, 255, 255, 0.02);
+        padding: 1.5rem;
+        border-radius: 1rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 0.75rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-color);
+        opacity: 0.7;
+    }
+
+    .chat-card {
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 1rem;
+        border: 1px solid var(--border-color);
+        height: 100%;
+    }
+
+    .chat-card-header {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .chat-title {
+        margin: 0;
+        font-size: 1rem;
+        color: var(--text-color);
+    }
+
+    .chat-card-body {
+        padding: 1rem;
+    }
+
+    .chat-message {
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .message-user {
+        background: rgba(0, 234, 255, 0.1);
+        color: var(--primary-color);
+    }
+
+    .message-bot {
+        background: rgba(255, 47, 214, 0.1);
+        color: var(--secondary-color);
+    }
+
+    .chat-card-footer {
+        padding: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .section-title {
+        color: var(--primary-color);
+        font-size: 1.25rem;
+        font-weight: 600;
+        text-shadow: 0 0 10px rgba(0, 234, 255, 0.2);
+    }
+
+    .text-muted {
+        color: #b8e0ff !important;
+        opacity: 1 !important;
+    }
+
+    .user-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+    }
+    .user-info h2 {
+        font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
+        font-size: 2.2rem;
+        font-weight: 900;
+        color: var(--primary-color);
+        text-shadow: 0 2px 16px rgba(0,234,255,0.15), 0 1px 0 #222;
+        margin-bottom: 0.15rem;
+        letter-spacing: 1px;
+    }
+    .user-info .user-email {
+        color: #b8e0ff;
+        font-size: 1.08rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.15rem;
+    }
+    .user-info .user-email i {
+        color: var(--primary-color);
+        opacity: 0.8;
+    }
+    .user-meta {
+        margin-top: 0.15rem;
+        display: flex;
+        align-items: center;
+        gap: 1.2rem;
+        font-size: 1.01rem;
+    }
+    .user-meta .user-joined {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: #b8e0ff;
+        font-weight: 500;
+    }
+    .user-meta .user-joined i {
+        color: var(--primary-color);
+        opacity: 0.8;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtn = document.getElementById('toggle-user-status-btn');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function() {
+            const userId = this.dataset.userId;
+            if (confirm('Are you sure you want to change this user\'s status?')) {
+                showLoading();
+                fetch(`/chatbot/admin/users/${userId}/toggle-status/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`Server responded with status ${response.status}: ${text}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'success') {
+                        location.reload();
+                    } else {
+                        console.error('Server responded with error:', data.message);
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    alert('An error occurred: ' + error.message);
+                })
+                .finally(() => {
+                    hideLoading();
+                });
+            }
+        });
+    }
+});
+</script>
+{% endblock %} 

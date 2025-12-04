@@ -1,0 +1,155 @@
+{% extends 'chatbot/base.html' %}
+
+{% load static %}
+
+{% block title %}Login - A.I.V.A{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-logo">
+                <i class="fas fa-robot"></i>
+            </div>
+            <h1 class="auth-title">Welcome to A.I.V.A</h1>
+            <p class="auth-subtitle">Sign in to continue your conversation</p>
+        </div>
+
+        <!-- Display Messages -->
+        {% if messages %}
+        {% for message in messages %}
+        {% if message.tags == "error" %}
+        <div class="error-message">
+            <i class="fas fa-exclamation-circle"></i>
+            {{ message|safe }}
+        </div>
+        {% elif message.tags == "success" %}
+        <div class="success-message">
+            <i class="fas fa-check-circle"></i>
+            {{ message }}
+        </div>
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+
+        <!-- Login Form -->
+        <form method="post" action="{% url 'login' %}" class="auth-form">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="username" class="form-label">Username</label>
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="username" name="username" class="form-control"
+                        placeholder="Enter your username" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="password" name="password" class="form-control"
+                        placeholder="Enter your password" required>
+                </div>
+            </div>
+
+            <div class="auth-links">
+                <div class="remember-me">
+                    <input type="checkbox" id="remember" name="remember">
+                    <label for="remember">Remember me</label>
+                </div>
+                <a href="{% url 'forgot_password' %}" class="auth-link">Forgot Password?</a>
+            </div>
+
+            <button type="submit" name="login_submit" class="auth-btn">
+                <i class="fas fa-sign-in-alt"></i>
+                Sign In
+            </button>
+        </form>
+
+        <div class="auth-divider">
+            <span>OR</span>
+        </div>
+
+        <!-- Register Form -->
+        <form method="post" action="{% url 'login' %}" class="auth-form">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="reg-username" class="form-label">Username</label>
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="reg-username" name="username" class="form-control"
+                        placeholder="Choose a username">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="email" class="form-label">Email</label>
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password1" class="form-label">Password</label>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="password1" name="password1" class="form-control"
+                        placeholder="Create a password">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password2" class="form-label">Confirm Password</label>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="password2" name="password2" class="form-control"
+                        placeholder="Confirm your password">
+                </div>
+            </div>
+
+            <button type="submit" name="register_submit" class="auth-btn">
+                <i class="fas fa-user-plus"></i>
+                Create Account
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <p>By continuing, you agree to our Terms of Service and Privacy Policy</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simple toggle between login and register forms
+    const loginForm = document.querySelector('form[name="login_submit"]');
+    const registerForm = document.querySelector('form[name="register_submit"]');
+
+    // Hide register form by default
+    if (registerForm) {
+        registerForm.style.display = 'none';
+    }
+
+    // Add toggle functionality if needed
+    document.addEventListener('DOMContentLoaded', () => {
+        // Check if there are registration errors
+        const errorMessages = document.querySelectorAll('.error-message');
+        errorMessages.forEach(msg => {
+            if (msg.textContent.includes('Username already exists') ||
+                msg.textContent.includes('Email already registered') ||
+                msg.textContent.includes('Passwords don\'t match')) {
+                // Show register form if registration error
+                if (loginForm) loginForm.style.display = 'none';
+                if (registerForm) registerForm.style.display = 'block';
+            }
+        });
+    });
+</script>
+{% endblock %}
