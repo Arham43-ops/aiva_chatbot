@@ -9,6 +9,8 @@
         padding: var(--space-xl);
         max-width: 1200px;
         margin: 0 auto;
+        margin-top: var(--space-lg);
+        /* Added margin to prevent navbar overlap */
     }
 
     .welcome-section {
@@ -89,6 +91,7 @@
         border-radius: var(--radius-xl);
         padding: var(--space-xl);
         height: 100%;
+        margin-bottom: var(--space-xl);
     }
 
     .section-header {
@@ -269,37 +272,126 @@
                     <a href="{% url 'chat' %}?chat_id={{ last_chat.id }}" class="btn btn-sm btn-primary">Continue</a>
                 </div>
                 {% else %}
-                <p>No recent activity.</p>
+                <p class="text-muted">No recent activity.</p>
+                {% endif %}
+            </div>
+
+            <!-- Recent Documents -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="fas fa-file-alt" style="color: var(--color-accent);"></i> Recent Documents
+                    </div>
+                    <a href="#" style="font-size: var(--text-sm);">View All</a>
+                </div>
+                {% if recent_docs %}
+                <ul class="task-list-mini">
+                    {% for doc in recent_docs %}
+                    <li class="task-item-mini">
+                        <i class="fas fa-file-pdf" style="color: var(--color-text-muted);"></i>
+                        <span>{{ doc.title }}</span>
+                        <span class="due-badge"
+                            style="background: rgba(6, 182, 212, 0.2); color: var(--color-accent);">{{
+                            doc.uploaded_at|date:"M d" }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div style="text-align: center; padding: var(--space-lg); color: var(--color-text-muted);">
+                    <p>No documents uploaded.</p>
+                </div>
                 {% endif %}
             </div>
         </div>
 
-        <!-- Right Column: Priority Tasks -->
-        <div class="section-card">
-            <div class="section-header">
-                <div class="section-title">
-                    <i class="fas fa-exclamation-circle" style="color: var(--color-error);"></i> Priority Tasks
+        <!-- Right Column -->
+        <div style="display: flex; flex-direction: column; gap: var(--space-xl);">
+
+            <!-- Task Overview Chart -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="fas fa-chart-pie" style="color: var(--color-secondary);"></i> Task Overview
+                    </div>
                 </div>
-                <a href="{% url 'calendar' %}" style="font-size: var(--text-sm);">View All</a>
+                <div style="position: relative; height: 200px;">
+                    <canvas id="taskChart"></canvas>
+                </div>
             </div>
 
-            {% if priority_tasks %}
-            <ul class="task-list-mini">
-                {% for task in priority_tasks %}
-                <li class="task-item-mini">
-                    <i class="far fa-circle" style="color: var(--color-text-muted);"></i>
-                    <span>{{ task.title }}</span>
-                    <span class="due-badge">{{ task.due_date|date:"M d" }}</span>
-                </li>
-                {% endfor %}
-            </ul>
-            {% else %}
-            <div style="text-align: center; padding: var(--space-xl); color: var(--color-text-muted);">
-                <i class="fas fa-clipboard-check" style="font-size: 2rem; margin-bottom: var(--space-sm);"></i>
-                <p>No priority tasks due.</p>
+            <!-- Priority Tasks -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="fas fa-exclamation-circle" style="color: var(--color-error);"></i> Priority Tasks
+                    </div>
+                    <a href="{% url 'calendar' %}" style="font-size: var(--text-sm);">View All</a>
+                </div>
+
+                {% if priority_tasks %}
+                <ul class="task-list-mini">
+                    {% for task in priority_tasks %}
+                    <li class="task-item-mini">
+                        <i class="far fa-circle" style="color: var(--color-text-muted);"></i>
+                        <span>{{ task.title }}</span>
+                        <span class="due-badge">{{ task.due_date|date:"M d" }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div style="text-align: center; padding: var(--space-xl); color: var(--color-text-muted);">
+                    <i class="fas fa-clipboard-check" style="font-size: 2rem; margin-bottom: var(--space-sm);"></i>
+                    <p>No priority tasks due.</p>
+                </div>
+                {% endif %}
             </div>
-            {% endif %}
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx = document.getElementById('taskChart').getContext('2d');
+
+        // Data from Django context
+        const pendingCount = {{ pending_tasks_count }
+    };
+    const completedCount = {{ completed_tasks_count }};
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Pending', 'Completed'],
+            datasets: [{
+                data: [pendingCount, completedCount],
+                backgroundColor: [
+                    '#6366f1', // Primary (Indigo)
+                    '#10b981'  // Success (Green)
+                ],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: '#cbd5e1', // Text secondary
+                        font: {
+                            family: "'Inter', sans-serif"
+                        }
+                    }
+                }
+            },
+            cutout: '70%',
+        }
+    });
+    });
+</script>
 {% endblock %}

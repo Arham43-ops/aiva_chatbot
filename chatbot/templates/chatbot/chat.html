@@ -4,8 +4,16 @@
 
 {% block title %}Chat with A.I.V.A{% endblock %}
 
+{% block navbar %}{% endblock %}
+{% block content_style %}padding-top: 0;{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/chat.css' %}">
+<style>
+    .chat-container {
+        height: 100vh;
+    }
+</style>
 {% endblock %}
 
 {% block content %}

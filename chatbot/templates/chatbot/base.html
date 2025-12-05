@@ -30,6 +30,7 @@
 
 
     <!-- Navbar -->
+    {% block navbar %}
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
             <a class="navbar-brand" href="{% url 'chat' %}">
@@ -115,9 +116,10 @@
             </div>
         </div>
     </nav>
+    {% endblock %}
 
     <!-- Main Content -->
-    <div style="padding-top: var(--header-height);">
+    <div style="{% block content_style %}padding-top: var(--header-height);{% endblock %}">
         {% block content %}
         <!-- Page specific content goes here -->
         {% endblock %}
