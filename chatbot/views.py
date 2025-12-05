@@ -35,6 +35,7 @@ from reportlab.lib.units import inch
 from reportlab.lib.enums import TA_LEFT, TA_CENTER
 import pypdf
 import os
+import re
 
 # Store OTPs temporarily (in production, use Redis or database)
 otp_store = {}
@@ -204,6 +205,44 @@ def send_message(request):
     
     return JsonResponse({'error': 'Invalid request method'}, status=400)
 
+def parse_date_from_text(text):
+    """
+    Simple helper to extract dates from text.
+    Supports: 'tomorrow', 'today', 'next week', 'YYYY-MM-DD'
+    """
+    text = text.lower()
+    now = timezone.now()
+    today = now.date()
+    
+    due_date = None
+    
+    if "tomorrow" in text:
+        due_date = now + timedelta(days=1)
+    elif "today" in text:
+        due_date = now
+    elif "next week" in text:
+        due_date = now + timedelta(weeks=1)
+    
+    # Try YYYY-MM-DD
+    match = re.search(r'\d{4}-\d{2}-\d{2}', text)
+    if match:
+        try:
+            date_obj = datetime.strptime(match.group(), '%Y-%m-%d').date()
+            due_date = timezone.make_aware(datetime.combine(date_obj, datetime.min.time()))
+        except ValueError:
+            pass
+            
+    # Default to 9 AM if time is not parsed (simplification)
+    if due_date:
+        # If it's already a datetime (from now + timedelta), replace time
+        # If it's just a date, combine
+        if isinstance(due_date, date) and not isinstance(due_date, datetime):
+             due_date = timezone.make_aware(datetime.combine(due_date, datetime.min.time().replace(hour=9)))
+        else:
+             due_date = due_date.replace(hour=9, minute=0, second=0, microsecond=0)
+             
+    return due_date
+
 def generate_response(request, message, chat_session=None):
     """
     Generate a response using KnowledgeBase, Documents, Tasks, and rule-based responses.
@@ -215,9 +254,16 @@ def generate_response(request, message, chat_session=None):
     if request.user.is_authenticated:
         if message_lower.startswith("add task") or message_lower.startswith("remind me to"):
             task_title = message_lower.replace("add task", "").replace("remind me to", "").strip()
+            
+            # Extract date
+            due_date = parse_date_from_text(task_title)
+            
             if task_title:
-                Task.objects.create(user=request.user, title=task_title)
-                return f"✅ I've added '{task_title}' to your tasks."
+                Task.objects.create(user=request.user, title=task_title, due_date=due_date)
+                response = f"✅ I've added '{task_title}' to your tasks."
+                if due_date:
+                    response += f" Scheduled for {due_date.strftime('%b %d')}."
+                return response
             else:
                 return "What task would you like me to add?"
         
@@ -302,8 +348,13 @@ def add_task(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         title = data.get('title')
+        due_date = data.get('due_date') # Format: YYYY-MM-DD
+        
         if title:
             task = Task.objects.create(user=request.user, title=title)
+            if due_date:
+                task.due_date = due_date
+                task.save()
             return JsonResponse({'status': 'success', 'task': {'id': task.id, 'title': task.title, 'is_completed': task.is_completed}})
     return JsonResponse({'status': 'error'}, status=400)
 
@@ -603,12 +654,16 @@ def admin_unanswered(request):
         for message in session.messages.filter(is_user=True).order_by('-timestamp'):
             # Check if the next message is a bot response and contains the default response
             next_message = session.messages.filter(timestamp__gt=message.timestamp, is_user=False).first()
-            if next_message and "I'm not sure how to respond to that. Can you please rephrase?" in next_message.message:
-                unanswered.append({
-                    'message': message,
-                    'chat_session': session,
-                    'timestamp': message.timestamp
-                })
+            
+            # Check for the specific fallback string (matching generate_response)
+            if next_message and "I'm not sure about that. Try asking something else" in next_message.message:
+                # Check if this question is already in the KnowledgeBase (case-insensitive)
+                if not KnowledgeBase.objects.filter(question__iexact=message.message.strip()).exists():
+                    unanswered.append({
+                        'message': message,
+                        'chat_session': session,
+                        'timestamp': message.timestamp
+                    })
 
     unanswered.sort(key=lambda x: x['timestamp'], reverse=True)
     context = {
@@ -723,9 +778,8 @@ def add_response(request, message_id):
                 knowledge_entry.answer = response_text
                 knowledge_entry.save()
 
-            # Delete the original unanswered message from ChatMessage
-            # This assumes that once a question is answered and added to KB, it's no longer 'unanswered' in the ChatMessage context
-            unanswered_message.delete()
+            # We DO NOT delete the original message anymore, so the chat history remains intact.
+            # The question will disappear from the "Unanswered" list because it's now in the KnowledgeBase.
 
             return JsonResponse({'status': 'success', 'message': 'Response added to knowledge base successfully!'})
         except Exception as e:
@@ -997,4 +1051,58 @@ def export_data(request, format_type):
         
         return response
     
-    return redirect('admin_dashboard') 
+    return redirect('admin_dashboard')
+
+@login_required
+def dashboard_view(request):
+    user = request.user
+    today = timezone.now().date()
+    
+    # Stats
+    pending_tasks_count = Task.objects.filter(user=user, is_completed=False).count()
+    completed_tasks_count = Task.objects.filter(user=user, is_completed=True).count()
+    recent_docs = Document.objects.filter(user=user).order_by('-uploaded_at')[:3]
+    
+    # Last active chat
+    last_chat = ChatSession.objects.filter(user=user).order_by('-updated_at').first()
+    
+    # Top 3 Priority Tasks (Due soonest)
+    priority_tasks = Task.objects.filter(
+        user=user, 
+        is_completed=False,
+        due_date__isnull=False
+    ).order_by('due_date')[:3]
+    
+    context = {
+        'pending_tasks_count': pending_tasks_count,
+        'completed_tasks_count': completed_tasks_count,
+        'recent_docs': recent_docs,
+        'last_chat': last_chat,
+        'priority_tasks': priority_tasks,
+        'today': today,
+    }
+    return render(request, 'chatbot/dashboard.html', context)
+
+@login_required
+def calendar_view(request):
+    # Fetch tasks with due dates for the calendar
+    tasks = Task.objects.filter(user=request.user, due_date__isnull=False)
+    
+    # Format for frontend (e.g., FullCalendar or custom)
+    # For now, just passing the queryset, template will handle display
+    return render(request, 'chatbot/calendar.html', {'tasks': tasks})
+
+@login_required
+def settings_view(request):
+    if request.method == 'POST':
+        profile = request.user.profile
+        
+        # Update Profile Settings
+        profile.voice_auto_read = request.POST.get('voice_auto_read') == 'on'
+        profile.email_notifications = request.POST.get('email_notifications') == 'on'
+        profile.save()
+        
+        messages.success(request, 'Settings updated successfully!')
+        return redirect('settings')
+        
+    return render(request, 'chatbot/settings.html') 

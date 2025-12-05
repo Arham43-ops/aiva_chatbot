@@ -1,0 +1,337 @@
+{% extends 'chatbot/base.html' %}
+{% load static %}
+
+{% block title %}Calendar - A.I.V.A{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calendar-container {
+        padding: var(--space-xl);
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--space-2xl);
+    }
+
+    .page-title {
+        font-size: var(--text-3xl);
+        font-weight: var(--font-bold);
+        color: var(--color-text-primary);
+    }
+
+    .task-timeline {
+        position: relative;
+        padding-left: var(--space-xl);
+    }
+
+    .task-timeline::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--glass-border);
+    }
+
+    .timeline-group {
+        margin-bottom: var(--space-2xl);
+        position: relative;
+    }
+
+    .timeline-date {
+        position: absolute;
+        left: -40px;
+        top: 0;
+        background: var(--color-bg-primary);
+        padding: var(--space-xs) var(--space-sm);
+        border: 1px solid var(--color-primary);
+        border-radius: var(--radius-md);
+        color: var(--color-primary-light);
+        font-weight: var(--font-bold);
+        font-size: var(--text-sm);
+        white-space: nowrap;
+        z-index: 1;
+    }
+
+    .task-card {
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-lg);
+        margin-bottom: var(--space-md);
+        margin-left: var(--space-lg);
+        transition: all var(--transition-base);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .task-card:hover {
+        transform: translateX(5px);
+        border-color: var(--color-primary);
+    }
+
+    .task-title {
+        font-size: var(--text-lg);
+        color: var(--color-text-primary);
+        margin-bottom: var(--space-xs);
+    }
+
+    .task-meta {
+        font-size: var(--text-sm);
+        color: var(--color-text-secondary);
+    }
+
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: var(--space-md);
+    }
+
+    .status-pending {
+        background: var(--color-warning);
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+    }
+
+    .status-completed {
+        background: var(--color-success);
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: var(--space-3xl);
+        color: var(--color-text-muted);
+    }
+
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        margin: 10% auto;
+        padding: var(--space-xl);
+        width: 90%;
+        max-width: 500px;
+        border-radius: var(--radius-xl);
+        position: relative;
+        box-shadow: var(--shadow-2xl);
+    }
+
+    .close {
+        position: absolute;
+        right: 20px;
+        top: 15px;
+        font-size: 28px;
+        cursor: pointer;
+        color: var(--color-text-secondary);
+        transition: color 0.2s;
+    }
+
+    .close:hover {
+        color: var(--color-error);
+    }
+
+    .form-group {
+        margin-bottom: var(--space-lg);
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: var(--space-xs);
+        color: var(--color-text-secondary);
+        font-size: var(--text-sm);
+    }
+
+    .form-input {
+        width: 100%;
+        padding: var(--space-sm);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--glass-border);
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--color-text-primary);
+        font-family: inherit;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="calendar-container">
+    <div class="page-header">
+        <h1 class="page-title">Task Agenda</h1>
+        <button class="btn btn-primary" id="openAddTaskBtn">
+            <i class="fas fa-plus"></i> Add Task
+        </button>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div id="addTaskModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeAddTaskBtn">&times;</span>
+            <h2 style="margin-top: 0; margin-bottom: var(--space-lg);">Schedule New Task</h2>
+
+            <form id="addTaskForm">
+                <div class="form-group">
+                    <label class="form-label">Task Title</label>
+                    <input type="text" id="taskTitle" class="form-input" required placeholder="e.g., Submit report">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Due Date & Time</label>
+                    <input type="datetime-local" id="taskDueDate" class="form-input" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Create Task</button>
+            </form>
+        </div>
+    </div>
+
+    {% if tasks %}
+    <div class="task-timeline">
+        {% regroup tasks by due_date|date:"F j, Y" as task_list %}
+
+        {% for date_group in task_list %}
+        <div class="timeline-group">
+            <div class="timeline-date">{{ date_group.grouper }}</div>
+
+            {% for task in date_group.list %}
+            <div class="task-card">
+                <div style="display: flex; align-items: center;">
+                    <div
+                        class="status-indicator {% if task.is_completed %}status-completed{% else %}status-pending{% endif %}">
+                    </div>
+                    <div>
+                        <div class="task-title"
+                            style="{% if task.is_completed %}text-decoration: line-through; opacity: 0.7;{% endif %}">
+                            {{ task.title }}
+                        </div>
+                        <div class="task-meta">
+                            Due: {{ task.due_date|time:"H:i" }}
+                        </div>
+                    </div>
+                </div>
+
+                {% if not task.is_completed %}
+                <button class="btn btn-sm btn-ghost toggle-task-btn" data-task-id="{{ task.id }}">
+                    <i class="fas fa-check"></i> Complete
+                </button>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-calendar-check" style="font-size: 4rem; margin-bottom: var(--space-lg); opacity: 0.5;"></i>
+        <h2>No scheduled tasks</h2>
+        <p>Add tasks with due dates to see them here.</p>
+        <button class="btn btn-primary" id="scheduleFirstTaskBtn" style="margin-top: var(--space-md);">
+            <i class="fas fa-plus"></i> Schedule First Task
+        </button>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Modal Elements
+        const modal = document.getElementById("addTaskModal");
+        const openBtn = document.getElementById("openAddTaskBtn");
+        const closeBtn = document.getElementById("closeAddTaskBtn");
+        const form = document.getElementById("addTaskForm");
+        const scheduleFirstBtn = document.getElementById("scheduleFirstTaskBtn");
+
+        // Open Modal
+        function openModal() {
+            modal.style.display = "block";
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('taskDueDate').value = now.toISOString().slice(0, 16);
+        }
+
+        if (openBtn) openBtn.addEventListener('click', openModal);
+        if (scheduleFirstBtn) scheduleFirstBtn.addEventListener('click', openModal);
+
+        // Close Modal
+        function closeModal() {
+            modal.style.display = "none";
+        }
+
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        // Handle Form Submit
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const title = document.getElementById('taskTitle').value;
+                const dueDate = document.getElementById('taskDueDate').value;
+
+                fetch('/tasks/add/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        title: title,
+                        due_date: dueDate
+                    })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            window.location.reload();
+                        } else {
+                            alert('Error adding task');
+                        }
+                    });
+            });
+        }
+
+        // Toggle Task
+        document.querySelectorAll('.toggle-task-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const taskId = this.getAttribute('data-task-id');
+                fetch(`/tasks/${taskId}/toggle/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                }).then(() => window.location.reload());
+            });
+        });
+    });
+</script>
+{% endblock %}

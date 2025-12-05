@@ -1,0 +1,166 @@
+{% extends 'chatbot/base.html' %}
+{% load static %}
+
+{% block title %}Settings - A.I.V.A{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-container {
+        padding: var(--space-xl);
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .settings-card {
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-xl);
+        padding: var(--space-2xl);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .settings-section {
+        margin-bottom: var(--space-2xl);
+        padding-bottom: var(--space-xl);
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .settings-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .section-title {
+        font-size: var(--text-xl);
+        font-weight: var(--font-bold);
+        color: var(--color-text-primary);
+        margin-bottom: var(--space-md);
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+    }
+
+    .setting-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--space-md) 0;
+    }
+
+    .setting-info h4 {
+        margin: 0;
+        font-size: var(--text-base);
+        color: var(--color-text-primary);
+    }
+
+    .setting-info p {
+        margin: 0;
+        font-size: var(--text-sm);
+        color: var(--color-text-secondary);
+    }
+
+    /* Toggle Switch */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+    }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--color-bg-tertiary);
+        transition: .4s;
+        border-radius: 34px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked+.slider {
+        background-color: var(--color-primary);
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(24px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <h1 style="margin-bottom: var(--space-xl);">Settings</h1>
+
+    <div class="settings-card">
+        <form method="POST">
+            {% csrf_token %}
+
+            <!-- Voice Settings -->
+            <div class="settings-section">
+                <div class="section-title">
+                    <i class="fas fa-microphone-alt" style="color: var(--color-accent);"></i> Voice Interface
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h4>Auto-read Responses</h4>
+                        <p>Automatically read out A.I.V.A's responses using Text-to-Speech.</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" name="voice_auto_read" {% if user.profile.voice_auto_read %}checked{%
+                            endif %}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Notification Settings -->
+            <div class="settings-section">
+                <div class="section-title">
+                    <i class="fas fa-bell" style="color: var(--color-warning);"></i> Notifications
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h4>Email Notifications</h4>
+                        <p>Receive emails about important updates and task reminders.</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" name="email_notifications" {% if user.profile.email_notifications
+                            %}checked{% endif %}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div style="margin-top: var(--space-xl); text-align: right;">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

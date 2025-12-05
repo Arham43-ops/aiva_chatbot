@@ -12,6 +12,7 @@ class Profile(models.Model):
     location = models.CharField(max_length=100, blank=True)
     email_notifications = models.BooleanField(default=True)
     chat_notifications = models.BooleanField(default=True)
+    voice_auto_read = models.BooleanField(default=True) # New Setting
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -84,7 +85,8 @@ class Task(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tasks')
     title = models.CharField(max_length=255)
     is_completed = models.BooleanField(default=False)
+    due_date = models.DateTimeField(null=True, blank=True) # New Field
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return f"{self.title} - {'Done' if self.is_completed else 'Pending'}" 
+        return f"{self.title} - {'Done' if self.is_completed else 'Pending'}"

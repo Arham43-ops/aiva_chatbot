@@ -1,0 +1,305 @@
+{% extends 'chatbot/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - A.I.V.A{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-container {
+        padding: var(--space-xl);
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .welcome-section {
+        margin-bottom: var(--space-2xl);
+    }
+
+    .welcome-text {
+        font-size: var(--text-3xl);
+        font-weight: var(--font-bold);
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: var(--space-sm);
+    }
+
+    .date-display {
+        color: var(--color-text-secondary);
+        font-size: var(--text-lg);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--space-lg);
+        margin-bottom: var(--space-2xl);
+    }
+
+    .stat-card {
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-xl);
+        padding: var(--space-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        transition: transform var(--transition-base);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-glow-primary);
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: var(--text-xl);
+        color: white;
+    }
+
+    .stat-info h3 {
+        font-size: var(--text-2xl);
+        margin: 0;
+        color: var(--color-text-primary);
+    }
+
+    .stat-info p {
+        margin: 0;
+        color: var(--color-text-secondary);
+        font-size: var(--text-sm);
+    }
+
+    .main-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: var(--space-xl);
+    }
+
+    .section-card {
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-xl);
+        padding: var(--space-xl);
+        height: 100%;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--space-lg);
+    }
+
+    .section-title {
+        font-size: var(--text-xl);
+        font-weight: var(--font-bold);
+        color: var(--color-text-primary);
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+    }
+
+    .action-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-md);
+    }
+
+    .action-btn-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-lg);
+        text-align: center;
+        cursor: pointer;
+        transition: all var(--transition-base);
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-sm);
+    }
+
+    .action-btn-card:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--color-primary);
+    }
+
+    .action-icon {
+        font-size: var(--text-2xl);
+        color: var(--color-primary-light);
+    }
+
+    .action-text {
+        color: var(--color-text-primary);
+        font-weight: var(--font-medium);
+    }
+
+    .task-list-mini {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .task-item-mini {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        padding: var(--space-md);
+        border-bottom: 1px solid var(--color-border);
+        color: var(--color-text-secondary);
+    }
+
+    .task-item-mini:last-child {
+        border-bottom: none;
+    }
+
+    .due-badge {
+        font-size: var(--text-xs);
+        padding: 2px 8px;
+        border-radius: var(--radius-full);
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        margin-left: auto;
+    }
+
+    @media (max-width: 768px) {
+        .main-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .action-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+        <h1 class="welcome-text">Welcome back, {{ user.first_name|default:user.username }}!</h1>
+        <p class="date-display">{{ today|date:"l, F j, Y" }}</p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: var(--color-primary);">
+                <i class="fas fa-tasks"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ pending_tasks_count }}</h3>
+                <p>Pending Tasks</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background: var(--color-success);">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ completed_tasks_count }}</h3>
+                <p>Completed Tasks</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background: var(--color-accent);">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ recent_docs|length }}</h3>
+                <p>Recent Docs</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="main-grid">
+        <!-- Left Column -->
+        <div style="display: flex; flex-direction: column; gap: var(--space-xl);">
+
+            <!-- Quick Actions -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="fas fa-bolt" style="color: var(--color-warning);"></i> Quick Actions
+                    </div>
+                </div>
+                <div class="action-grid">
+                    <a href="{% url 'new_chat' %}" class="action-btn-card">
+                        <i class="fas fa-comment-medical action-icon"></i>
+                        <span class="action-text">New Chat</span>
+                    </a>
+                    <a href="{% url 'chat' %}" class="action-btn-card">
+                        <i class="fas fa-file-upload action-icon"></i>
+                        <span class="action-text">Upload File</span>
+                    </a>
+                    <a href="{% url 'calendar' %}" class="action-btn-card">
+                        <i class="fas fa-calendar-plus action-icon"></i>
+                        <span class="action-text">View Calendar</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="fas fa-history" style="color: var(--color-info);"></i> Recent Activity
+                    </div>
+                </div>
+                {% if last_chat %}
+                <div
+                    style="background: rgba(255,255,255,0.03); padding: var(--space-md); border-radius: var(--radius-lg); display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h4 style="margin: 0; font-size: var(--text-base); color: var(--color-text-primary);">{{
+                            last_chat.title|default:"Untitled Chat" }}</h4>
+                        <p style="margin: 0; font-size: var(--text-sm); color: var(--color-text-secondary);">Last
+                            active: {{ last_chat.updated_at|timesince }} ago</p>
+                    </div>
+                    <a href="{% url 'chat' %}?chat_id={{ last_chat.id }}" class="btn btn-sm btn-primary">Continue</a>
+                </div>
+                {% else %}
+                <p>No recent activity.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right Column: Priority Tasks -->
+        <div class="section-card">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-exclamation-circle" style="color: var(--color-error);"></i> Priority Tasks
+                </div>
+                <a href="{% url 'calendar' %}" style="font-size: var(--text-sm);">View All</a>
+            </div>
+
+            {% if priority_tasks %}
+            <ul class="task-list-mini">
+                {% for task in priority_tasks %}
+                <li class="task-item-mini">
+                    <i class="far fa-circle" style="color: var(--color-text-muted);"></i>
+                    <span>{{ task.title }}</span>
+                    <span class="due-badge">{{ task.due_date|date:"M d" }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div style="text-align: center; padding: var(--space-xl); color: var(--color-text-muted);">
+                <i class="fas fa-clipboard-check" style="font-size: 2rem; margin-bottom: var(--space-sm);"></i>
+                <p>No priority tasks due.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

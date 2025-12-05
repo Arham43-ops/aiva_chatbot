@@ -51,6 +51,24 @@
                     </li>
                     {% if user.is_authenticated %}
                     <li class="nav-item">
+                        <a class="nav-link" href="{% url 'dashboard' %}">
+                            <i class="fas fa-home"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'calendar' %}">
+                            <i class="fas fa-calendar-alt"></i>
+                            Calendar
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'settings' %}">
+                            <i class="fas fa-cog"></i>
+                            Settings
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="{% url 'chat_list' %}">
                             <i class="fas fa-history"></i>
                             History
@@ -60,7 +78,7 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'admin_dashboard' %}">
                             <i class="fas fa-chart-line"></i>
-                            Dashboard
+                            Dashboard (Admin)
                         </a>
                     </li>
                     {% endif %}

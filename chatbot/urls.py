@@ -44,4 +44,9 @@ urlpatterns = [
     path('tasks/add/', views.add_task, name='add_task'),
     path('tasks/<int:task_id>/toggle/', views.toggle_task, name='toggle_task'),
     path('tasks/<int:task_id>/delete/', views.delete_task, name='delete_task'),
+    
+    # New Pages
+    path('dashboard/', views.dashboard_view, name='dashboard'),
+    path('calendar/', views.calendar_view, name='calendar'),
+    path('settings/', views.settings_view, name='settings'),
 ] 
