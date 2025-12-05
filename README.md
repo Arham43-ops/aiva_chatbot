@@ -1,6 +1,6 @@
 # 🤖 A.I.V.A - Artificial Intelligent Virtual Assistant
 
-<img src="static/images/AIVA_logo.png" alt="A.I.V.A Banner" width="200">
+<img src="static/images/AIVA_logo.png" alt="A.I.V.A Banner" margin="auto" width="200">
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-4.2-092E20?style=for-the-badge&logo=django&logoColor=white)](https://www.djangoproject.com/)
