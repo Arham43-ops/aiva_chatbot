@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
-from .models import ChatMessage, ChatSession, Profile, Feedback, KnowledgeBase
+from .models import ChatMessage, ChatSession, Profile, Feedback, KnowledgeBase, Document, Task
 from .forms import UserRegistrationForm, ProfileForm, FeedbackForm
 import json
 from django.contrib.admin.views.decorators import staff_member_required
@@ -16,7 +16,7 @@ import string
 from django.core.mail import send_mail
 from django.conf import settings
 from datetime import timedelta
-from django.db.models import Count
+from django.db.models import Count, Q
 from datetime import date
 from django.db.models.functions import TruncDate
 from django.urls import reverse
@@ -33,6 +33,8 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.lib.enums import TA_LEFT, TA_CENTER
+import pypdf
+import os
 
 # Store OTPs temporarily (in production, use Redis or database)
 otp_store = {}
@@ -204,46 +206,125 @@ def send_message(request):
 
 def generate_response(request, message, chat_session=None):
     """
-    Generate a response using only the KnowledgeBase and rule-based responses.
+    Generate a response using KnowledgeBase, Documents, Tasks, and rule-based responses.
     """
     print(f"[DEBUG] Incoming message: {message}")
     message_lower = message.lower().strip()
-    print(f"[DEBUG] Processed message (lowercase, stripped): {message_lower}")
+    
+    # 0. Check for Task Commands
+    if request.user.is_authenticated:
+        if message_lower.startswith("add task") or message_lower.startswith("remind me to"):
+            task_title = message_lower.replace("add task", "").replace("remind me to", "").strip()
+            if task_title:
+                Task.objects.create(user=request.user, title=task_title)
+                return f"✅ I've added '{task_title}' to your tasks."
+            else:
+                return "What task would you like me to add?"
+        
+        if message_lower == "show tasks" or message_lower == "my tasks":
+            tasks = Task.objects.filter(user=request.user, is_completed=False).order_by('-created_at')
+            if tasks.exists():
+                task_list = "\n".join([f"• {t.title}" for t in tasks])
+                return f"Here are your pending tasks:\n{task_list}"
+            else:
+                return "You have no pending tasks. Great job! 🎉"
 
     # 1. Check KnowledgeBase for an answer first
     try:
         knowledge_entry = KnowledgeBase.objects.get(question__iexact=message_lower)
-        print(f"[DEBUG] Found KnowledgeBase entry: {knowledge_entry.answer}")
         return knowledge_entry.answer
     except KnowledgeBase.DoesNotExist:
-        print("[DEBUG] No direct KnowledgeBase match.")
         pass
-    except Exception as e:
-        print(f"[DEBUG] Error checking KnowledgeBase: {e}")
-        pass
+    
+    # 2. Check Documents (Context-Aware Search)
+    if request.user.is_authenticated:
+        documents = Document.objects.filter(user=request.user).order_by('-uploaded_at')[:3] # Check last 3 docs
+        for doc in documents:
+            try:
+                file_path = doc.file.path
+                ext = os.path.splitext(file_path)[1].lower()
+                content = ""
+                
+                if ext == '.pdf':
+                    reader = pypdf.PdfReader(file_path)
+                    for page in reader.pages:
+                        content += page.extract_text() + "\n"
+                elif ext == '.txt':
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                
+                # Simple keyword search in content
+                # Split message into keywords (ignore common words)
+                stop_words = ['what', 'is', 'the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'but']
+                keywords = [w for w in message_lower.split() if w not in stop_words and len(w) > 3]
+                
+                if keywords:
+                    for line in content.split('\n'):
+                        if any(k in line.lower() for k in keywords):
+                            return f"📄 From {doc.file.name}: {line.strip()}"
+            except Exception as e:
+                print(f"Error reading document {doc.id}: {e}")
 
-    # 2. Fallback to simple rule-based responses
+    # 3. Fallback to simple rule-based responses
     if "hello" in message_lower or "hi" in message_lower:
-        print("[DEBUG] Matched rule: Hello/Hi")
-        return "Hello! How can I help you today?"
+        return "Hello! I'm A.I.V.A, your advanced assistant. How can I help you today?"
     elif "how are you" in message_lower:
-        print("[DEBUG] Matched rule: How are you")
-        return "I don't have feelings, but I'm ready to assist you!"
+        return "I'm functioning perfectly! Ready to help you with tasks, documents, or just chatting."
     elif "your name" in message_lower:
-        print("[DEBUG] Matched rule: Your name")
-        return "I am A.I.V.A (Artificial Intelligence and Virtual Assistant), a chatbot powered by advanced language models."
+        return "I am A.I.V.A (Advanced Interactive Virtual Assistant)."
     elif "help" in message_lower:
-        print("[DEBUG] Matched rule: Help")
-        return "I can answer questions, provide information, or just chat. What do you need help with?"
-    elif "bye" in message_lower or "goodbye" in message_lower:
-        print("[DEBUG] Matched rule: Bye/Goodbye")
-        return "Goodbye! Feel free to return if you have more questions."
-    elif "thank you" in message_lower or "thanks" in message_lower:
-        print("[DEBUG] Matched rule: Thank you/Thanks")
-        return "You're welcome!"
-    else:
-        print("[DEBUG] No rule matched. Returning default response.")
-        return "I'm not sure how to respond to that. Can you please rephrase?"
+        return "I can help you with:\n• 📄 Analyzing documents (upload a PDF/TXT)\n• ✅ Managing tasks (say 'add task...')\n• 🎙️ Voice interaction\n• ❓ Answering questions"
+    elif "bye" in message_lower:
+        return "Goodbye! Have a productive day! 👋"
+    elif "thank" in message_lower:
+        return "You're very welcome! 😊"
+    
+    return "I'm not sure about that. Try asking something else, or upload a document for me to analyze!"
+
+@login_required
+@csrf_exempt
+def upload_document(request):
+    if request.method == 'POST' and request.FILES.get('document'):
+        document = request.FILES['document']
+        Document.objects.create(user=request.user, file=document)
+        return JsonResponse({'status': 'success', 'message': 'Document uploaded successfully! I can now answer questions about it.'})
+    return JsonResponse({'status': 'error', 'message': 'No file uploaded.'}, status=400)
+
+@login_required
+def get_tasks(request):
+    tasks = Task.objects.filter(user=request.user).order_by('-created_at')
+    task_data = [{'id': t.id, 'title': t.title, 'is_completed': t.is_completed} for t in tasks]
+    return JsonResponse({'tasks': task_data})
+
+@login_required
+@csrf_exempt
+def add_task(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        title = data.get('title')
+        if title:
+            task = Task.objects.create(user=request.user, title=title)
+            return JsonResponse({'status': 'success', 'task': {'id': task.id, 'title': task.title, 'is_completed': task.is_completed}})
+    return JsonResponse({'status': 'error'}, status=400)
+
+@login_required
+@csrf_exempt
+def toggle_task(request, task_id):
+    if request.method == 'POST':
+        task = get_object_or_404(Task, id=task_id, user=request.user)
+        task.is_completed = not task.is_completed
+        task.save()
+        return JsonResponse({'status': 'success', 'is_completed': task.is_completed})
+    return JsonResponse({'status': 'error'}, status=400)
+
+@login_required
+@csrf_exempt
+def delete_task(request, task_id):
+    if request.method == 'POST':
+        task = get_object_or_404(Task, id=task_id, user=request.user)
+        task.delete()
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error'}, status=400)
 
 @login_required
 def new_chat(request):

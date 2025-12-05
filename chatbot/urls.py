@@ -37,4 +37,11 @@ urlpatterns = [
     path('dashboard/knowledge-base/<int:entry_id>/update/', views.update_knowledge_base_entry, name='update_knowledge_base_entry'),
     path('dashboard/knowledge-base/<int:entry_id>/delete/', views.delete_knowledge_base_entry, name='delete_knowledge_base_entry'),
     path('export/<str:format_type>/', views.export_data, name='export_data'),
+    
+    # New Features
+    path('upload-document/', views.upload_document, name='upload_document'),
+    path('tasks/', views.get_tasks, name='get_tasks'),
+    path('tasks/add/', views.add_task, name='add_task'),
+    path('tasks/<int:task_id>/toggle/', views.toggle_task, name='toggle_task'),
+    path('tasks/<int:task_id>/delete/', views.delete_task, name='delete_task'),
 ] 

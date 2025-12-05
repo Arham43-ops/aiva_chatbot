@@ -70,4 +70,21 @@ class KnowledgeBase(models.Model):
 
     class Meta:
         verbose_name = "Knowledge Base Entry"
-        verbose_name_plural = "Knowledge Base Entries" 
+        verbose_name_plural = "Knowledge Base Entries"
+
+class Document(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='documents')
+    file = models.FileField(upload_to='documents/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.file.name} ({self.user.username})"
+
+class Task(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tasks')
+    title = models.CharField(max_length=255)
+    is_completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.title} - {'Done' if self.is_completed else 'Pending'}" 

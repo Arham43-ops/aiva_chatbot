@@ -13,7 +13,9 @@
     <!-- Sidebar -->
     {% if user_is_authenticated %}
     <div class="sidebar">
-        <div class="sidebar-header">Menu</div>
+        <div class="sidebar-header">
+            <i class="fas fa-robot"></i> A.I.V.A
+        </div>
         <ul class="sidebar-menu">
             <li class="sidebar-item">
                 <a href="{% url 'profile' %}" class="sidebar-link">
@@ -22,7 +24,7 @@
             </li>
             <li class="sidebar-item">
                 <a href="{% url 'chat_list' %}" class="sidebar-link">
-                    <i class="fas fa-history"></i> Chat Histories
+                    <i class="fas fa-history"></i> History
                 </a>
             </li>
             <li class="sidebar-item">
@@ -38,7 +40,7 @@
             {% if user.is_staff %}
             <li class="sidebar-item">
                 <a href="{% url 'admin_dashboard' %}" class="sidebar-link">
-                    <i class="fas fa-chart-line"></i> Admin Dashboard
+                    <i class="fas fa-chart-line"></i> Dashboard
                 </a>
             </li>
             {% endif %}
@@ -53,42 +55,59 @@
     <div class="main-chat-area">
         <!-- Chat Header -->
         <div class="chat-header">
-            {% if user_is_authenticated %}
-            <a href="{% url 'chat_list' %}" class="back-button">
-                <i class="fas fa-arrow-left"></i> Back to Chats
-            </a>
-            {% else %}
-            <span class="chat-title">A.I.V.A Chat</span>
-            {% endif %}
-
-            <span class="chat-title">
-                {% if chat_session %}
-                {{ chat_session.title }}
-                {% else %}
-                New Chat
+            <div class="chat-title">
+                {% if user_is_authenticated %}
+                <div class="chat-status"></div>
                 {% endif %}
-            </span>
+                <span>
+                    {% if chat_session %}
+                    {{ chat_session.title }}
+                    {% else %}
+                    New Conversation
+                    {% endif %}
+                </span>
+            </div>
 
-            {% if chat_session %}
-            <a href="{% url 'delete_chat' chat_session.id %}" class="delete-chat-button"
-                onclick="return confirm('Are you sure you want to delete this chat session?');">
-                <i class="fas fa-trash"></i> Delete
-            </a>
-            {% endif %}
+            <div class="header-actions" style="display: flex; gap: 10px;">
+                {% if user_is_authenticated %}
+                <button id="task-toggle-btn" class="action-btn" title="Tasks">
+                    <i class="fas fa-tasks"></i>
+                </button>
+                {% endif %}
+
+                {% if chat_session %}
+                <a href="{% url 'delete_chat' chat_session.id %}" class="action-btn" style="color: var(--color-error);"
+                    onclick="return confirm('Delete this chat?');" title="Delete Chat">
+                    <i class="fas fa-trash"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Task Panel -->
+        <div class="task-panel" id="task-panel">
+            <div class="task-header">
+                <h3>My Tasks</h3>
+                <button class="action-btn" id="close-task-panel"><i class="fas fa-times"></i></button>
+            </div>
+            <ul class="task-list" id="task-list">
+                <!-- Tasks will be loaded here -->
+            </ul>
         </div>
 
         <!-- Chat Window -->
         <div class="chat-window" id="chat-window">
             {% if chat_session %}
             {% for message in chat_session.messages.all %}
-            <div class="message {% if message.is_user %}user{% else %}bot{% endif %} message-appear">
+            <div class="message {% if message.is_user %}user{% else %}bot{% endif %}">
                 {{ message.message }}
                 <span class="message-timestamp">{{ message.timestamp|date:"H:i" }}</span>
             </div>
             {% endfor %}
             {% else %}
-            <div class="message bot message-appear">
-                Hello! How can I help you today?
+            <div class="message bot">
+                Hello! I'm A.I.V.A. I can help you analyze documents, manage tasks, or just chat. How can I assist you
+                today?
                 <span class="message-timestamp">{{ now|date:"H:i" }}</span>
             </div>
             {% endif %}
@@ -96,8 +115,26 @@
 
         <!-- Input Area -->
         <div class="input-area">
-            <input type="text" id="message-input" class="form-control" placeholder="Type your message..."
-                autocomplete="off">
+            <!-- File Preview -->
+            <div id="file-preview" class="file-preview" style="display: none;">
+                <i class="fas fa-file-alt"></i>
+                <span id="file-name">document.pdf</span>
+                <button id="remove-file" class="action-btn" style="width: 20px; height: 20px; font-size: 0.8rem;"><i
+                        class="fas fa-times"></i></button>
+            </div>
+
+            <input type="file" id="file-upload" hidden accept=".pdf,.txt">
+            <button id="upload-btn" class="action-btn" title="Upload Document">
+                <i class="fas fa-paperclip"></i>
+            </button>
+
+            <div class="input-wrapper">
+                <input type="text" id="message-input" placeholder="Type a message or 'add task...'" autocomplete="off">
+                <button id="mic-btn" class="action-btn" title="Voice Input">
+                    <i class="fas fa-microphone"></i>
+                </button>
+            </div>
+
             <button id="send-button" class="btn-send">
                 <i class="fas fa-paper-plane"></i>
             </button>
@@ -108,42 +145,166 @@
 
 {% block extra_js %}
 <script>
-    // Get chat session ID from data attribute
+    // --- Variables ---
     const chatContainer = document.querySelector('.chat-container');
     let currentChatId = chatContainer ? chatContainer.dataset.chatId : null;
-    if (currentChatId) {
-        currentChatId = parseInt(currentChatId);
-    }
+    if (currentChatId) currentChatId = parseInt(currentChatId);
 
     const chatWindow = document.getElementById('chat-window');
     const messageInput = document.getElementById('message-input');
     const sendButton = document.getElementById('send-button');
+    const uploadBtn = document.getElementById('upload-btn');
+    const fileInput = document.getElementById('file-upload');
+    const micBtn = document.getElementById('mic-btn');
+    const taskToggleBtn = document.getElementById('task-toggle-btn');
+    const taskPanel = document.getElementById('task-panel');
+    const closeTaskPanelBtn = document.getElementById('close-task-panel');
+    const taskList = document.getElementById('task-list');
+    const filePreview = document.getElementById('file-preview');
+    const fileNameSpan = document.getElementById('file-name');
+    const removeFileBtn = document.getElementById('remove-file');
 
-    // Scroll to the bottom of the chat window
+    let selectedFile = null;
+    let isListening = false;
+    let recognition = null;
+
+    // --- Initialization ---
     function scrollToBottom() {
-        if (window.UIAnimations && window.UIAnimations.smoothScrollTo) {
-            window.UIAnimations.smoothScrollTo(chatWindow);
-        } else {
-            chatWindow.scrollTop = chatWindow.scrollHeight;
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+    scrollToBottom();
+    if (taskToggleBtn) loadTasks(); // Load tasks on init if logged in
+
+    // --- Voice Recognition (Web Speech API) ---
+    if ('webkitSpeechRecognition' in window) {
+        recognition = new webkitSpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = function () {
+            isListening = true;
+            micBtn.classList.add('active');
+            messageInput.placeholder = "Listening...";
+        };
+
+        recognition.onend = function () {
+            isListening = false;
+            micBtn.classList.remove('active');
+            messageInput.placeholder = "Type a message or 'add task...'";
+        };
+
+        recognition.onresult = function (event) {
+            const transcript = event.results[0][0].transcript;
+            messageInput.value = transcript;
+            sendMessage(); // Auto-send on voice end
+        };
+
+        micBtn.addEventListener('click', () => {
+            if (isListening) recognition.stop();
+            else recognition.start();
+        });
+    } else {
+        micBtn.style.display = 'none'; // Hide if not supported
+    }
+
+    // --- Text to Speech ---
+    function speak(text) {
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            window.speechSynthesis.speak(utterance);
         }
     }
 
-    scrollToBottom(); // Scroll on page load
+    // --- File Upload ---
+    uploadBtn.addEventListener('click', () => fileInput.click());
 
-    // Send message function
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            selectedFile = e.target.files[0];
+            fileNameSpan.textContent = selectedFile.name;
+            filePreview.style.display = 'flex';
+
+            // Auto-upload
+            const formData = new FormData();
+            formData.append('document', selectedFile);
+
+            fetch('/upload-document/', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                body: formData
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        appendMessage(`📄 Uploaded: ${selectedFile.name}`, true);
+                        appendMessage("I've analyzed the document. You can now ask questions about it!", false);
+                        selectedFile = null;
+                        filePreview.style.display = 'none';
+                        fileInput.value = '';
+                    }
+                });
+        }
+    });
+
+    removeFileBtn.addEventListener('click', () => {
+        selectedFile = null;
+        filePreview.style.display = 'none';
+        fileInput.value = '';
+    });
+
+    // --- Task Management ---
+    if (taskToggleBtn) {
+        taskToggleBtn.addEventListener('click', () => taskPanel.classList.toggle('open'));
+        closeTaskPanelBtn.addEventListener('click', () => taskPanel.classList.remove('open'));
+    }
+
+    function loadTasks() {
+        fetch('/tasks/')
+            .then(res => res.json())
+            .then(data => {
+                taskList.innerHTML = '';
+                data.tasks.forEach(task => {
+                    const li = document.createElement('li');
+                    li.className = `task-item ${task.is_completed ? 'completed' : ''}`;
+                    li.innerHTML = `
+                        <input type="checkbox" class="task-checkbox" ${task.is_completed ? 'checked' : ''} 
+                               onchange="toggleTask(${task.id})">
+                        <span>${task.title}</span>
+                        <i class="fas fa-trash" style="margin-left: auto; color: var(--color-text-muted); font-size: 0.8rem;" 
+                           onclick="deleteTask(${task.id})"></i>
+                    `;
+                    taskList.appendChild(li);
+                });
+            });
+    }
+
+    window.toggleTask = function (taskId) {
+        fetch(`/tasks/${taskId}/toggle/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        }).then(() => loadTasks());
+    };
+
+    window.deleteTask = function (taskId) {
+        if (confirm('Delete this task?')) {
+            fetch(`/tasks/${taskId}/delete/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') }
+            }).then(() => loadTasks());
+        }
+    };
+
+    // --- Chat Logic ---
     function sendMessage() {
         const message = messageInput.value.trim();
         if (message) {
-            appendMessage(message, true); // Append user message
-            messageInput.value = ''; // Clear input
+            appendMessage(message, true);
+            messageInput.value = '';
 
-            // Prepare request data with chat_id
             const requestData = { message: message };
-            if (currentChatId) {
-                requestData.chat_id = currentChatId;
-            }
+            if (currentChatId) requestData.chat_id = currentChatId;
 
-            // Send message to Django view
             fetch('/send_message/', {
                 method: 'POST',
                 headers: {
@@ -155,8 +316,14 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.response) {
-                        appendMessage(data.response, false); // Append bot message
-                        // Update currentChatId if a new session was created
+                        appendMessage(data.response, false);
+                        speak(data.response); // Read response
+
+                        // Refresh tasks if command was related
+                        if (message.toLowerCase().includes('task')) {
+                            loadTasks();
+                        }
+
                         if (data.chat_session_id && !currentChatId) {
                             const newUrl = `/chat/${data.chat_session_id}/`;
                             window.history.replaceState({}, '', newUrl);
@@ -164,26 +331,26 @@
                         }
                     }
                 })
-                .catch(error => console.error('Error sending message:', error));
+                .catch(error => console.error('Error:', error));
         }
     }
 
-    // Append message to chat window
     function appendMessage(message, isUser) {
         const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', isUser ? 'user' : 'bot', 'message-appear');
+        messageDiv.classList.add('message', isUser ? 'user' : 'bot');
 
-        let innerHTML = `
-            ${message}
+        // Format links if any
+        let formattedMessage = message.replace(/\n/g, '<br>');
+
+        messageDiv.innerHTML = `
+            ${formattedMessage}
             <span class="message-timestamp">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
         `;
 
-        messageDiv.innerHTML = innerHTML;
         chatWindow.appendChild(messageDiv);
         scrollToBottom();
     }
 
-    // CSRF token helper
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -199,12 +366,9 @@
         return cookieValue;
     }
 
-    // Event listeners for sending messages
     sendButton.addEventListener('click', sendMessage);
     messageInput.addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            sendMessage();
-        }
+        if (e.key === 'Enter') sendMessage();
     });
 </script>
 {% endblock %}
