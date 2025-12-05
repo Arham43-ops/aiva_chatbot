@@ -1,415 +1,191 @@
-<div align="center">
+# 🤖 A.I.V.A - Artificial Intelligent Virtual Assistant
 
-# 🤖 A.I.V.A. Chatbot
+![A.I.V.A Banner](static/images/AIVA_logo.png)
 
-### Advanced Interactive Virtual Assistant
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Django](https://img.shields.io/badge/Django-4.2-092E20?style=for-the-badge&logo=django&logoColor=white)](https://www.djangoproject.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=for-the-badge)](https://github.com/Arham43-ops/aiva_chatbot)
 
-*A sophisticated Django-based chatbot application with intelligent conversation management, comprehensive admin controls, and seamless user experience.*
+> **"Your Intelligent Companion for a Smarter Workflow."**
 
-[![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Django](https://img.shields.io/badge/Django-5.2.1-092E20?style=for-the-badge&logo=django&logoColor=white)](https://www.djangoproject.com/)
-[![MySQL](https://img.shields.io/badge/MySQL-Database-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
-[![License](https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge)](LICENSE)
+A.I.V.A (Artificial Intelligent Virtual Assistant) is a cutting-edge chatbot application designed to redefine personal productivity. Unlike standard chatbots, A.I.V.A integrates **Voice Interaction**, **Document Analysis**, and **Task Management** into a single, cohesive platform wrapped in a stunning **Glassmorphism 2.0** interface.
 
-[Features](#-features) • [Installation](#-installation--setup) • [Usage](#-usage) • [Documentation](#-project-structure) • [License](#-license)
-
-</div>
+Whether you need to summarize a PDF, manage your daily schedule, or just have a conversation hands-free, A.I.V.A is built to assist.
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
-### 🎯 Core Functionality
-- **💬 Interactive Chat Interface** - Real-time messaging with A.I.V.A. chatbot powered by knowledge base
-- **🔐 User Authentication** - Complete registration, login, and secure password reset system
-- **📝 Chat Session Management** - Multiple chat sessions with persistent conversation history
-- **👤 User Profiles** - Customizable profiles with avatar support and notification preferences
-- **📚 Knowledge Base** - Admin-managed Q&A system for consistent and accurate responses
+### 🎙️ **Voice Interface (Hands-Free)**
+- **Speech-to-Text:** Talk to A.I.V.A naturally using your microphone.
+- **Text-to-Speech:** A.I.V.A reads responses back to you with a natural-sounding voice.
+- **Auto-Read Toggle:** Configurable settings to enable/disable automatic voice responses.
 
-### 🛡️ Admin Features
-- **📊 Admin Dashboard** - Comprehensive management interface with analytics
-- **👥 User Management** - View, manage, and toggle user status with detailed insights
-- **💭 Chat Monitoring** - Review and analyze chat sessions for quality assurance
-- **📢 Feedback System** - Collect and respond to user feedback efficiently
-- **🗃️ Knowledge Base Management** - Add, edit, and delete knowledge entries
-- **📤 Data Export** - Export user data and analytics in CSV and PDF formats
-- **❓ Unanswered Questions Tracker** - Monitor and respond to unhandled queries
+### 📄 **Smart Document Assistant**
+- **PDF & Text Analysis:** Upload documents directly into the chat.
+- **Contextual Q&A:** Ask specific questions about the content of your uploaded files.
+- **Knowledge Retention:** A.I.V.A remembers the context of the document during the session.
 
-### 🔒 Security & Communication
-- **🔑 OTP-based Password Reset** - Secure email-based password recovery system
-- **📧 Email Notifications** - Configurable email alerts and notifications
-- **🛡️ CSRF Protection** - Built-in security against cross-site request forgery
-- **⏱️ Session Management** - Secure user session handling with timeout controls
+### ✅ **Advanced Task Management**
+- **Natural Language Tasks:** Create tasks by saying "Remind me to call John at 5 PM".
+- **Smart Date Parsing:** Automatically detects "tomorrow", "next Monday", or specific dates.
+- **Visual Calendar:** View and manage your tasks on a dedicated interactive calendar page.
+- **Priority Tracking:** Dashboard widgets highlight your most urgent tasks.
 
----
+### 📊 **User Dashboard**
+- **Central Hub:** A comprehensive overview of your activity.
+- **Real-time Stats:** Track pending tasks, completed items, and recent uploads.
+- **Quick Actions:** One-click shortcuts to key features.
+- **Activity Charts:** Visual breakdown of your productivity.
 
-## 🏗️ Project Structure
-
-```
-A.I.V.A Chatbot/
-├── 📁 chatbot/                    # Main application
-│   ├── 📁 management/
-│   │   └── 📁 commands/
-│   │       └── create_missing_profiles.py
-│   ├── 📁 templates/chatbot/      # HTML templates
-│   ├── admin.py                   # Admin interface configuration
-│   ├── forms.py                   # Django forms
-│   ├── models.py                  # Database models
-│   ├── urls.py                    # URL routing
-│   └── views.py                   # View functions
-├── 📁 my_app/                     # Django project settings
-│   ├── settings.py                # Configuration
-│   ├── urls.py                    # Main URL configuration
-│   ├── wsgi.py                    # WSGI configuration
-│   └── asgi.py                    # ASGI configuration
-├── 📁 media/                      # User uploaded files
-├── 📁 static/                     # Static files (CSS, JS, Images)
-│   ├── 📁 css/                    # Stylesheets
-│   ├── 📁 js/                     # JavaScript files
-│   └── 📁 images/                 # Image assets
-├── 📁 staticfiles/                # Collected static files
-├── manage.py                      # Django management script
-├── requirements.txt               # Python dependencies
-└── knowledge_base_data.sql        # Sample knowledge base data
-```
+### 🎨 **Premium UI/UX**
+- **Glassmorphism 2.0:** A modern, dark-themed aesthetic with blur effects, vibrant gradients, and floating elements.
+- **Responsive Design:** Fully optimized for Desktops, Tablets, and Mobile devices.
+- **Smooth Animations:** Engaging micro-interactions and page transitions.
 
 ---
 
-## 📊 Database Models
+## 🛠️ Built With
 
-### 👤 User Management
-| Model | Description |
-|-------|-------------|
-| **Profile** | Extended user profiles with avatars, bio, and notification preferences |
-| **User** | Built-in Django user model with custom admin interface |
-
-### 💬 Chat System
-| Model | Description |
-|-------|-------------|
-| **ChatSession** | Individual chat conversations with users |
-| **ChatMessage** | Individual messages within chat sessions |
-| **KnowledgeBase** | Admin-managed Q&A pairs for consistent responses |
-
-### 📢 Feedback & Support
-| Model | Description |
-|-------|-------------|
-| **Feedback** | User feedback collection and management system |
+*   **Backend Framework:** [Django](https://www.djangoproject.com/) (Python)
+*   **Frontend:** HTML5, CSS3 (Custom Variables), JavaScript (ES6+)
+*   **Database:** SQLite (Development) / PostgreSQL (Production Ready)
+*   **PDF Processing:** `pypdf`
+*   **Voice API:** Web Speech API (Native Browser Support)
+*   **Charts:** [Chart.js](https://www.chartjs.org/)
 
 ---
 
-## 🚀 Installation & Setup
+## 🚀 Getting Started
+
+Follow these steps to get a local copy up and running.
 
 ### Prerequisites
 
-Before you begin, ensure you have the following installed:
+*   Python 3.8 or higher
+*   pip (Python Package Installer)
 
-- ![Python](https://img.shields.io/badge/Python-3.8+-blue) Python 3.8 or higher
-- ![MySQL](https://img.shields.io/badge/MySQL-Server-orange) MySQL Server
-- ![Git](https://img.shields.io/badge/Git-Latest-red) Git
+### Installation
 
-### 📥 Installation Steps
+1.  **Clone the Repository**
+    ```bash
+    git clone https://github.com/Arham43-ops/aiva_chatbot.git
+    cd aiva_chatbot
+    ```
 
-#### 1️⃣ Clone the Repository
+2.  **Create a Virtual Environment**
+    ```bash
+    # Windows
+    python -m venv venv
+    venv\Scripts\activate
 
-```bash
-git clone https://github.com/Arham43-ops/aiva_chatbot.git
-cd aiva_chatbot
-```
+    # macOS/Linux
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
 
-#### 2️⃣ Create Virtual Environment
+3.  **Install Dependencies**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-```bash
-# Create virtual environment
-python -m venv venv
+4.  **Apply Database Migrations**
+    ```bash
+    python manage.py migrate
+    ```
 
-# Activate virtual environment
-# On Windows:
-venv\Scripts\activate
-# On macOS/Linux:
-source venv/bin/activate
-```
+5.  **Create a Superuser (Optional, for Admin Access)**
+    ```bash
+    python manage.py createsuperuser
+    ```
 
-#### 3️⃣ Install Dependencies
+6.  **Run the Development Server**
+    ```bash
+    python manage.py runserver
+    ```
 
-```bash
-pip install -r requirements.txt
-```
-
-**Or install manually:**
-
-```bash
-pip install django==5.2.1
-pip install mysqlclient==2.2.4
-pip install reportlab==4.2.5
-pip install pillow==11.0.0
-```
-
-#### 4️⃣ Database Configuration
-
-**Create MySQL Database:**
-
-```sql
-CREATE DATABASE AIVAChatbot CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-**Update Database Settings:**
-
-Edit `my_app/settings.py`:
-
-```python
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'AIVAChatbot',
-        'USER': 'your_mysql_username',
-        'PASSWORD': 'your_mysql_password',
-        'HOST': 'localhost',
-        'PORT': '3306',
-    }
-}
-```
-
-#### 5️⃣ Email Configuration
-
-Update email settings in `my_app/settings.py`:
-
-```python
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'your_email@gmail.com'
-EMAIL_HOST_PASSWORD = 'your_app_password'  # Use App Password for Gmail
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-```
-
-> **Note:** For Gmail, you need to generate an [App Password](https://support.google.com/accounts/answer/185833).
-
-#### 6️⃣ Run Migrations
-
-```bash
-python manage.py makemigrations
-python manage.py migrate
-```
-
-#### 7️⃣ Create Superuser
-
-```bash
-python manage.py createsuperuser
-```
-
-Follow the prompts to create your admin account.
-
-#### 8️⃣ Create User Profiles
-
-```bash
-python manage.py create_missing_profiles
-```
-
-#### 9️⃣ Collect Static Files
-
-```bash
-python manage.py collectstatic --noinput
-```
-
-#### 🔟 Run Development Server
-
-```bash
-python manage.py runserver
-```
-
-🎉 **Success!** Visit [http://127.0.0.1:8000](http://127.0.0.1:8000) to see your application.
+7.  **Access the Application**
+    Open your browser and navigate to: `http://127.0.0.1:8000/`
 
 ---
 
-## 🎯 Usage
+## 📖 Usage Guide
 
-### 👨‍💼 For Users
+### 1. Interacting with A.I.V.A
+- **Text:** Type your message in the input bar and press Enter.
+- **Voice:** Click the 🎙️ **Microphone** icon. Speak clearly. Click again to stop or wait for auto-detection.
 
-| Feature | URL | Description |
-|---------|-----|-------------|
-| **Home** | `/` | Main chat interface |
-| **Register** | `/register/` | Create a new account |
-| **Login** | `/login/` | Access your account |
-| **Profile** | `/profile/` | Customize your profile |
-| **Chat History** | `/chats/` | View previous conversations |
-| **Feedback** | `/feedback/` | Submit feedback |
-| **Password Reset** | `/password-reset/` | Reset forgotten password |
+### 2. Uploading Documents
+- Click the � **Paperclip** icon in the chat bar.
+- Select a PDF or TXT file.
+- Once uploaded, ask questions like *"Summarize this document"* or *"What does page 3 say?"*.
 
-### 🔧 For Administrators
-
-| Feature | URL | Description |
-|---------|-----|-------------|
-| **Admin Dashboard** | `/admin-dashboard/` | Custom admin interface |
-| **Django Admin** | `/admin/` | Built-in Django admin |
-| **User Management** | `/admin-dashboard/users/` | Manage users |
-| **Knowledge Base** | `/admin-dashboard/knowledge-base/` | Manage Q&A entries |
-| **Feedback** | `/admin-dashboard/feedback/` | Review user feedback |
-| **Export Data** | `/admin-dashboard/export/` | Export analytics |
+### 3. Managing Tasks
+- **Add:** Type *"Add task Buy groceries"* or *"Remind me to submit report on Friday"*.
+- **View:** Go to the **Dashboard** or **Calendar** page.
+- **Complete:** Click the checkbox next to a task in the sidebar or calendar to mark it as done.
 
 ---
 
-## 🔧 Configuration
+## 📂 Project Structure
 
-### ⚙️ Key Settings
-
-| Setting | Description | Default |
-|---------|-------------|---------|
-| `DEBUG` | Debug mode (set to `False` in production) | `True` |
-| `SECRET_KEY` | Django secret key (change in production) | Auto-generated |
-| `ALLOWED_HOSTS` | Allowed host/domain names | `[]` |
-| `OTP_EXPIRY_MINUTES` | OTP validity duration | `10` |
-
-### 📧 Email Settings
-
-The application uses Gmail SMTP by default. To configure:
-
-1. Enable 2-Factor Authentication on your Gmail account
-2. Generate an [App Password](https://support.google.com/accounts/answer/185833)
-3. Update `EMAIL_HOST_USER` and `EMAIL_HOST_PASSWORD` in `settings.py`
-
----
-
-## 🎨 Features Overview
-
-### 💬 Chat Interface
-- ✅ Modern, responsive design with sidebar navigation
-- ✅ Real-time message display
-- ✅ Multiple chat session support
-- ✅ Message history persistence
-- ✅ Knowledge base integration
-
-### 📊 Admin Dashboard
-- ✅ User analytics and statistics
-- ✅ Chat session monitoring
-- ✅ Feedback management
-- ✅ Knowledge base administration
-- ✅ CSV and PDF export capabilities
-
-### 🔒 Security Features
-- ✅ CSRF protection
-- ✅ Secure password hashing
-- ✅ OTP-based password reset
-- ✅ Session management
-- ✅ Input validation and sanitization
-- ✅ SQL injection protection
-
----
-
-## 🛠️ Development
-
-### 📝 Custom Management Commands
-
-```bash
-# Create profiles for existing users without profiles
-python manage.py create_missing_profiles
+```text
+aiva_chatbot/
+├── chatbot/                 # Main Application App
+│   ├── migrations/          # Database Migrations
+│   ├── templates/           # HTML Templates
+│   │   └── chatbot/
+│   │       ├── base.html    # Base layout
+│   │       ├── chat.html    # Main Chat Interface
+│   │       ├── dashboard.html # User Dashboard
+│   │       └── ...
+│   ├── models.py            # Database Models (Task, Document, ChatSession)
+│   ├── views.py             # Application Logic
+│   └── urls.py              # URL Routing
+├── static/                  # Static Assets
+│   ├── css/                 # Stylesheets (variables.css, chat.css, etc.)
+│   ├── js/                  # JavaScript Files
+│   └── images/              # Logos and Icons
+├── manage.py                # Django Management Script
+├── requirements.txt         # Project Dependencies
+└── README.md                # Project Documentation
 ```
 
-### 🎨 Template Structure
-- Base templates with consistent styling
-- Responsive design with modern CSS
-- Modular template inheritance
-- Bootstrap integration
-
-### 🔗 URL Structure
-- Clean, RESTful URL patterns
-- Organized routing with namespaces
-- Admin and user route separation
-
 ---
 
-## 📈 Future Enhancements
+## 🗺️ Roadmap
 
-- [ ] 🤖 AI/ML integration for intelligent responses (NLP, GPT integration)
-- [ ] ⚡ Real-time chat with WebSockets
-- [ ] 📱 Mobile app development (React Native/Flutter)
-- [ ] 📊 Advanced analytics dashboard with charts
-- [ ] 🌍 Multi-language support (i18n)
-- [ ] 📎 File upload in chat
-- [ ] 🎤 Voice message support
-- [ ] 🔍 Advanced search functionality
-- [ ] 🎨 Theme customization
-- [ ] 📈 Sentiment analysis
+- [x] **Voice Interface Integration**
+- [x] **Document Analysis (PDF)**
+- [x] **Task Management System**
+- [x] **User Dashboard & Calendar**
+- [ ] **LLM Integration (OpenAI/Gemini API)**
+- [ ] **Multi-language Support**
+- [ ] **Email Notifications**
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+1.  Fork the Project
+2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4.  Push to the Branch (`git push origin feature/AmazingFeature`)
+5.  Open a Pull Request
+
+---
+
+## 👤 Author
+
+**Arham**
+- **Role:** Lead Developer & Designer
+- **GitHub:** [@Arham43-ops](https://github.com/Arham43-ops)
 
 ---
 
 ## 📄 License
 
-This project is licensed under a **Proprietary License** - see the [LICENSE](LICENSE) file for details.
-
-**⚠️ All rights reserved. Copying, distribution, or use without explicit permission is prohibited.**
-
----
-
-## 👨‍💻 Author
-
-<div align="center">
-
-**Arham**
-
-[![GitHub](https://img.shields.io/badge/GitHub-Arham43--ops-181717?style=for-the-badge&logo=github)](https://github.com/Arham43-ops)
-[![Email](https://img.shields.io/badge/Email-topiwalaarham%40gmail.com-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:topiwalaarham@gmail.com)
-
-</div>
-
----
-
-## 🙏 Acknowledgments
-
-- **Django Framework** - For the robust web development platform
-- **Bootstrap** - For responsive UI components
-- **ReportLab** - For PDF generation capabilities
-- **MySQL** - For reliable database management
-- **Pillow** - For image processing
-
----
-
-## 📞 Support
-
-If you encounter any issues or have questions:
-
-- 🐛 [Report a Bug](https://github.com/Arham43-ops/aiva_chatbot/issues)
-- 💡 [Request a Feature](https://github.com/Arham43-ops/aiva_chatbot/issues)
-- 📧 [Email Support](mailto:topiwalaarham@gmail.com)
-
----
-
-<div align="center">
-
-### ⭐ Star this repository if you find it helpful!
-
-**Made with ❤️ by Arham**
-
-</div>
-
----
-
-## ⚠️ Important Notes
-
-> **Security Reminder:** Before deploying to production:
-> - Change the `SECRET_KEY` in settings.py
-> - Set `DEBUG = False`
-> - Update `ALLOWED_HOSTS` with your domain
-> - Use environment variables for sensitive data
-> - Enable HTTPS
-> - Configure proper database backups
-
-> **Database:** Make sure to regularly backup your MySQL database to prevent data loss.
-
-> **Email:** Test email functionality in development before deploying to production.
-
----
-
-**Last Updated:** December 2025
+Distributed under the MIT License. See `LICENSE` for more information.
