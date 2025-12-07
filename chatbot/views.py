@@ -1105,4 +1105,88 @@ def settings_view(request):
         messages.success(request, 'Settings updated successfully!')
         return redirect('settings')
         
-    return render(request, 'chatbot/settings.html') 
+    return render(request, 'chatbot/settings.html')
+
+@login_required
+def get_user_settings(request):
+    """Return user's settings as JSON"""
+    try:
+        profile = request.user.profile
+        return JsonResponse({
+            'status': 'success',
+            'voice_auto_read': profile.voice_auto_read,
+            'email_notifications': profile.email_notifications
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
+
+@login_required
+def send_task_notifications(request):
+    """Send email notifications for incomplete tasks if email_notifications is enabled"""
+    try:
+        profile = request.user.profile
+        
+        # Only send if email notifications are enabled
+        if not profile.email_notifications:
+            return JsonResponse({
+                'status': 'info',
+                'message': 'Email notifications are disabled'
+            })
+        
+        # Get incomplete tasks
+        incomplete_tasks = Task.objects.filter(user=request.user, is_completed=False)
+        
+        if not incomplete_tasks.exists():
+            return JsonResponse({
+                'status': 'success',
+                'message': 'No incomplete tasks to notify about'
+            })
+        
+        # Prepare email content
+        task_list = '\n'.join([f"• {task.title}" + (f" (Due: {task.due_date.strftime('%b %d, %Y')})" if task.due_date else "") for task in incomplete_tasks])
+        
+        subject = 'A.I.V.A - Incomplete Tasks Reminder'
+        html_message = f"""
+            <div style='font-family:Segoe UI,Arial,sans-serif;max-width:600px;margin:auto;background:#f6fafd;padding:0;border-radius:16px;border:1px solid #e0e6ed;box-shadow:0 4px 24px rgba(78,166,133,0.07);'>
+                <div style='background:linear-gradient(90deg,#4EA685 0%,#57B894 100%);padding:24px 0 16px 0;border-radius:16px 16px 0 0;text-align:center;'>
+                    <img src='https://cdn-icons-png.flaticon.com/512/4712/4712035.png' alt='Chatbot Icon' width='48' style='vertical-align:middle;margin-bottom:8px;'>
+                    <h1 style='color:#fff;font-size:2rem;margin:0;font-weight:900;letter-spacing:1px;'>A.I.V.A Chatbot</h1>
+                    <div style='color:#eafaf3;font-size:1.1rem;margin-top:4px;'>Task Reminder</div>
+                </div>
+                <div style='padding:32px 28px 24px 28px;'>
+                    <p style='font-size:1.13rem;color:#222;margin-top:0;'>Hi <b>{request.user.username}</b>,</p>
+                    <p style='font-size:1.05rem;color:#333;margin-bottom:2rem;'>You have {incomplete_tasks.count()} incomplete task(s) that need your attention:</p>
+                    <div style='background:#eafaf3;border-left:4px solid #4EA685;padding:1.1rem 1.5rem;margin-bottom:2.2rem;border-radius:7px;font-size:1.08rem;color:#222;line-height:1.6;'>
+                        {task_list.replace(chr(10), '<br>')}
+                    </div>
+                    <p style='margin-top:2.7rem;color:#a0a0a0;font-size:0.97rem;text-align:center;'>
+                        <span style='font-size:1.1rem;'>🤖</span> Powered by A.I.V.A Chatbot
+                    </p>
+                </div>
+            </div>
+        """
+        
+        message_body = f"Hi {request.user.username},\n\nYou have {incomplete_tasks.count()} incomplete task(s):\n\n{task_list}\n\nBest regards,\nA.I.V.A Chatbot"
+        
+        send_mail(
+            subject,
+            message_body,
+            settings.EMAIL_HOST_USER,
+            [request.user.email],
+            fail_silently=False,
+            html_message=html_message,
+        )
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Email notification sent for {incomplete_tasks.count()} incomplete task(s)'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500) 

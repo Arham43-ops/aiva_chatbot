@@ -22,7 +22,7 @@
     {% if user_is_authenticated %}
     <div class="sidebar">
         <div class="sidebar-header">
-            <i class="fas fa-robot"></i> A.I.V.A
+            <i class="fas fa-robot"></i>&nbsp&nbsp A.I.V.A Chatbot
         </div>
         <ul class="sidebar-menu">
             <li class="sidebar-item">
@@ -190,13 +190,20 @@
     let selectedFile = null;
     let isListening = false;
     let recognition = null;
+    let userSettings = {
+        voice_auto_read: true,
+        email_notifications: true
+    };
 
     // --- Initialization ---
     function scrollToBottom() {
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
     scrollToBottom();
-    if (taskToggleBtn) loadTasks(); // Load tasks on init if logged in
+    if (taskToggleBtn) {
+        loadTasks(); // Load tasks on init if logged in
+        loadUserSettings(); // Load user settings
+    }
 
     // --- Voice Recognition (Web Speech API) ---
     if ('webkitSpeechRecognition' in window) {
@@ -233,10 +240,24 @@
 
     // --- Text to Speech ---
     function speak(text) {
-        if ('speechSynthesis' in window) {
+        // Only speak if auto-read is enabled
+        if ('speechSynthesis' in window && userSettings.voice_auto_read) {
             const utterance = new SpeechSynthesisUtterance(text);
             window.speechSynthesis.speak(utterance);
         }
+    }
+
+    // --- Load User Settings ---
+    function loadUserSettings() {
+        fetch('/get-user-settings/')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    userSettings.voice_auto_read = data.voice_auto_read;
+                    userSettings.email_notifications = data.email_notifications;
+                }
+            })
+            .catch(error => console.error('Error loading settings:', error));
     }
 
     // --- File Upload ---

@@ -49,4 +49,8 @@ urlpatterns = [
     path('dashboard/', views.dashboard_view, name='dashboard'),
     path('calendar/', views.calendar_view, name='calendar'),
     path('settings/', views.settings_view, name='settings'),
+    
+    # Settings and Notifications
+    path('get-user-settings/', views.get_user_settings, name='get_user_settings'),
+    path('send-task-notifications/', views.send_task_notifications, name='send_task_notifications'),
 ] 
