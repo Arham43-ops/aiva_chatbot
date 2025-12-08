@@ -1097,10 +1097,19 @@ def settings_view(request):
     if request.method == 'POST':
         profile = request.user.profile
         
+        # Debug: Print what we're receiving
+        print(f"[SETTINGS DEBUG] POST data: {request.POST}")
+        print(f"[SETTINGS DEBUG] voice_auto_read value: {request.POST.get('voice_auto_read')}")
+        print(f"[SETTINGS DEBUG] email_notifications value: {request.POST.get('email_notifications')}")
+        
         # Update Profile Settings
         profile.voice_auto_read = request.POST.get('voice_auto_read') == 'on'
         profile.email_notifications = request.POST.get('email_notifications') == 'on'
+        
+        print(f"[SETTINGS DEBUG] Saving - voice_auto_read: {profile.voice_auto_read}, email_notifications: {profile.email_notifications}")
         profile.save()
+        
+        print(f"[SETTINGS DEBUG] After save - voice_auto_read: {profile.voice_auto_read}, email_notifications: {profile.email_notifications}")
         
         messages.success(request, 'Settings updated successfully!')
         return redirect('settings')

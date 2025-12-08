@@ -19,7 +19,7 @@
 {% block content %}
 <div class="chat-container" {% if chat_session %}data-chat-id="{{ chat_session.id }}" {% endif %}>
     <!-- Sidebar -->
-    {% if user_is_authenticated %}
+    {% if user.is_authenticated %}
     <div class="sidebar">
         <div class="sidebar-header">
             <i class="fas fa-robot"></i>&nbsp&nbsp A.I.V.A Chatbot
@@ -191,8 +191,8 @@
     let isListening = false;
     let recognition = null;
     let userSettings = {
-        voice_auto_read: true,
-        email_notifications: true
+        voice_auto_read: false,  // Default to false until loaded from server
+        email_notifications: false
     };
 
     // --- Initialization ---
@@ -200,9 +200,15 @@
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
     scrollToBottom();
+
+    // Load user settings for authenticated users
+    const isAuthenticated = "{{ user.is_authenticated }}" === "True";
+    if (isAuthenticated) {
+        loadUserSettings();
+    }
+
     if (taskToggleBtn) {
         loadTasks(); // Load tasks on init if logged in
-        loadUserSettings(); // Load user settings
     }
 
     // --- Voice Recognition (Web Speech API) ---
@@ -240,21 +246,28 @@
 
     // --- Text to Speech ---
     function speak(text) {
+        console.log('Speak called. voice_auto_read:', userSettings.voice_auto_read);
         // Only speak if auto-read is enabled
         if ('speechSynthesis' in window && userSettings.voice_auto_read) {
+            console.log('Speaking:', text);
             const utterance = new SpeechSynthesisUtterance(text);
             window.speechSynthesis.speak(utterance);
+        } else {
+            console.log('Speech disabled or not supported');
         }
     }
 
     // --- Load User Settings ---
     function loadUserSettings() {
+        console.log('Loading user settings...');
         fetch('/get-user-settings/')
             .then(res => res.json())
             .then(data => {
+                console.log('Settings loaded:', data);
                 if (data.status === 'success') {
                     userSettings.voice_auto_read = data.voice_auto_read;
                     userSettings.email_notifications = data.email_notifications;
+                    console.log('Updated userSettings:', userSettings);
                 }
             })
             .catch(error => console.error('Error loading settings:', error));
